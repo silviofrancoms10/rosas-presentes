@@ -9,6 +9,7 @@ const cartStore = useCartStore()
 
 const categories = [
   { id: 'todos', name: '🌸 Todos' },
+  { id: 'destaques', name: '✨ Destaques' },
   { id: 'buques', name: '💐 Buquês' },
   { id: 'cestas', name: '🧺 Cestas' },
   { id: 'presentes', name: '🎁 Presentes' }

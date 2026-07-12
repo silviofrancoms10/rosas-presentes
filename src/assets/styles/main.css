@@ -169,9 +169,9 @@ body {
 }
 
 .mobile-navigation-bar {
-  background: rgba(253, 240, 213, 0.95);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(243, 244, 246, 0.98);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border-top: 1px solid rgba(120, 0, 0, 0.1);
   @apply fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-40 md:hidden shadow-lg;
 }

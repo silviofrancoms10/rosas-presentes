@@ -30,7 +30,10 @@ const filteredProducts = computed(() => {
   if (selectedCategory.value === 'todos') {
     return products.value
   }
-  return products.value.filter((p) => p.category === selectedCategory.value)
+  return products.value.filter((p) => {
+    const cats = p.categories || (p.category ? [p.category] : [])
+    return cats.includes(selectedCategory.value)
+  })
 })
 
 // Sync Route Query with category filter
@@ -49,6 +52,7 @@ watch(
 // Categories with background images
 const categories = [
   { id: 'todos', name: '🌸 Todos', image: '/images/categorias/categoria-todos.jpg' },
+  { id: 'destaques', name: '✨ Destaques', image: '/images/categorias/categoria-todos.jpg' },
   { id: 'buques', name: '💐 Buquês', image: '/images/categorias/categoria-buques.jpg' },
   { id: 'cestas', name: '🧺 Cestas', image: '/images/categorias/categoria-cestas.jpg' },
   { id: 'presentes', name: '🎁 Presentes', image: '/images/categorias/categoria-presentes.jpg' },
@@ -89,6 +93,8 @@ function resetCarouselTimer() {
 function selectCategory(categoryId: string) {
   router.push({ path: '/', query: { category: categoryId } })
 }
+
+
 
 const touchStartX = ref(0)
 const touchEndX = ref(0)
@@ -232,7 +238,7 @@ onUnmounted(() => {
     <Header @toggle-cart="toggleCart" />
 
     <!-- Full-Width Hero Carousel Section -->
-    <section v-if="featuredProducts.length > 0" class="relative w-full">
+    <section v-if="featuredProducts.length > 0" id="destaques-section" class="relative w-full">
       <div
         class="carousel-container-full"
         @touchstart="handleCarouselTouchStart"
@@ -332,15 +338,15 @@ onUnmounted(() => {
     </section>
 
     <!-- Main Content Container -->
-    <main class="max-w-6xl mx-auto px-4 pt-8 space-y-8 flex-grow">
+    <main class="max-w-6xl mx-auto px-4 pt-8 space-y-8 flex-grow min-w-0 w-full">
       <!-- Category Filter Section (Rectangle Cards with Double Height) -->
-      <section class="space-y-3">
+      <section class="space-y-3 max-w-full overflow-hidden">
         <h3 class="text-lg font-bold text-burgundy tracking-tight">Categorias</h3>
-        <div class="flex w-full gap-3 md:gap-4 pb-4">
+        <div class="flex w-full gap-3 md:gap-4 pb-4 overflow-x-auto scrollbar-none">
           <div
             v-for="cat in categories"
             :key="cat.id"
-            class="relative rounded-2xl overflow-hidden flex-1 h-20 md:h-24 cursor-pointer select-none transition-all duration-300 ease-in-out border-2 shadow-sm"
+            class="relative rounded-2xl overflow-hidden w-[130px] shrink-0 h-20 md:flex-1 md:w-auto md:h-24 cursor-pointer select-none transition-all duration-300 ease-in-out border-2 shadow-sm"
             :class="selectedCategory === cat.id ? 'border-burgundy scale-105 shadow-md -translate-y-0.5' : 'border-transparent opacity-85 hover:opacity-100 hover:scale-[1.02]'"
             @click="selectCategory(cat.id)"
           >
@@ -368,7 +374,7 @@ onUnmounted(() => {
       <section class="space-y-4">
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-bold text-burgundy tracking-tight">
-            {{ categories.find((c) => c.id === selectedCategory)?.name.slice(3) }}
+            {{ categories.find((c) => c.id === selectedCategory)?.name.split(' ').slice(1).join(' ') }}
           </h3>
           <span class="text-xs text-burgundy/60 font-medium">
             {{ filteredProducts.length }} itens encontrados
@@ -598,7 +604,9 @@ onUnmounted(() => {
               </h2>
               <div class="flex items-center space-x-2">
                 <span class="badge-discount text-[10px]">{{
-                  categories.find((c) => c.id === selectedProduct?.category)?.name
+                  selectedProduct?.categories
+                    ? selectedProduct.categories.map(catId => categories.find(c => c.id === catId)?.name || catId).join(', ')
+                    : categories.find((c) => c.id === selectedProduct?.category)?.name
                 }}</span>
                 <span class="text-xs text-neutral-500 font-medium">{{
                   selectedProduct.installments
@@ -834,6 +842,7 @@ onUnmounted(() => {
 
     <!-- Mobile Navigation Bar -->
     <div class="mobile-navigation-bar">
+      <!-- 1. Início -->
       <button
         class="mobile-nav-item"
         :class="{ 'mobile-nav-item-active': selectedCategory === 'todos' }"
@@ -856,6 +865,30 @@ onUnmounted(() => {
         <span class="text-[10px] mt-0.5 font-semibold">Início</span>
       </button>
 
+      <!-- 2. Destaques -->
+      <button
+        class="mobile-nav-item"
+        :class="{ 'mobile-nav-item-active': selectedCategory === 'destaques' }"
+        @click="selectCategory('destaques')"
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          class="h-5.5 w-5.5"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.907c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.907a1 1 0 00.95-.69l1.519-4.674z"
+          />
+        </svg>
+        <span class="text-[10px] mt-0.5 font-semibold">Destaques</span>
+      </button>
+
+      <!-- 3. Carrinho -->
       <button class="mobile-nav-item relative" @click="toggleCart">
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -880,24 +913,7 @@ onUnmounted(() => {
         <span class="text-[10px] mt-0.5 font-semibold">Carrinho</span>
       </button>
 
-      <button class="mobile-nav-item" @click="router.push('/checkout')">
-        <svg
-          xmlns="http://www.w3.org/2000/svg"
-          class="h-5.5 w-5.5"
-          fill="none"
-          viewBox="0 0 24 24"
-          stroke="currentColor"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
-          />
-        </svg>
-        <span class="text-[10px] mt-0.5 font-semibold">Checkout</span>
-      </button>
-
+      <!-- 4. Contato -->
       <a
         href="https://wa.me/5567999476896?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!"
         target="_blank"

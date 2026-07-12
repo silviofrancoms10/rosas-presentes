@@ -5,6 +5,7 @@
     "description": "Clássico e elegante buquê com 12 rosas vermelhas selecionadas e folhagens nobres.",
     "price": 195.90,
     "category": "buques",
+    "categories": ["buques", "destaques"],
     "image": "/images/produtos/buque-rosas-vermelhas.jpg",
     "images": [
       "/images/produtos/buque-rosas-vermelhas.jpg",
@@ -19,6 +20,7 @@
     "description": "Lindo arranjo de girassóis vibrantes montado em vaso decorativo para iluminar o dia.",
     "price": 140.00,
     "category": "buques",
+    "categories": ["buques"],
     "image": "/images/produtos/arranjo-girassois.jpg",
     "images": [
       "/images/produtos/arranjo-girassois.jpg"
@@ -32,6 +34,7 @@
     "description": "Cesta completa com pães artesanais, frios, suco integral, frutas da estação, caneca exclusiva e arranjo de mini rosas.",
     "price": 325.00,
     "category": "cestas",
+    "categories": ["cestas", "destaques"],
     "image": "/images/produtos/cesta-cafe-premium.jpg",
     "images": [
       "/images/produtos/cesta-cafe-premium.jpg",
@@ -47,6 +50,7 @@
     "price": 175.00,
     "oldPrice": 195.00,
     "category": "cestas",
+    "categories": ["cestas"],
     "image": "/images/produtos/cesta-chocolates.jpg",
     "images": [
       "/images/produtos/cesta-chocolates.jpg"
@@ -60,6 +64,7 @@
     "description": "Rosa importada preservada em cúpula de vidro (durabilidade de até 2 anos) inspirada em contos de fadas.",
     "price": 239.90,
     "category": "presentes",
+    "categories": ["presentes", "destaques"],
     "image": "/images/produtos/rosa-encantada.jpg",
     "images": [
       "/images/produtos/rosa-encantada.jpg",
@@ -74,6 +79,7 @@
     "description": "Caixa cartonada premium contendo uma garrafa de vinho tinto, taça personalizada e arranjo de 6 rosas.",
     "price": 295.00,
     "category": "presentes",
+    "categories": ["presentes", "destaques"],
     "image": "/images/produtos/box-vinho-rosas.jpg",
     "images": [
       "/images/produtos/box-vinho-rosas.jpg"
