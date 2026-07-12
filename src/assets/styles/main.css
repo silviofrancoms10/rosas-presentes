@@ -1,0 +1,185 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-burgundy: #780000;
+  --color-crimson: #c1121f;
+  --color-white: white;
+}
+
+/* Fundo Global Unificado e Tipografia */
+body {
+  background-color: var(--color-white);
+  color: #2b2b2b;
+  font-family:
+    'Montserrat',
+    system-ui,
+    -apple-system,
+    sans-serif;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Componentes de Layout e Vitrine */
+.header-glass {
+  background: rgba(120, 0, 0, 0.92);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  @apply text-white sticky top-0 z-40 transition-all duration-300 shadow-md;
+}
+
+/* Card com efeito Glassmorphism */
+.product-card-glass {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 8px 32px 0 rgba(120, 0, 0, 0.04);
+  @apply rounded-2xl p-3 transition-all duration-300 ease-in-out flex flex-col justify-between h-full relative overflow-hidden;
+}
+
+.product-card-glass:hover {
+  background: rgba(255, 255, 255, 0.65);
+  box-shadow: 0 12px 40px 0 rgba(120, 0, 0, 0.08);
+  @apply -translate-y-1;
+}
+
+/* Botões da Identidade Visual */
+.btn-primary {
+  @apply bg-burgundy text-white font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:bg-crimson hover:shadow-md active:scale-95 text-center cursor-pointer;
+}
+
+.btn-secondary {
+  @apply border border-burgundy text-burgundy font-semibold px-5 py-2.5 rounded-xl transition-all duration-200 hover:bg-burgundy/10 active:scale-95 text-center cursor-pointer;
+}
+
+.btn-primary-sm {
+  @apply bg-burgundy text-white text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-200 hover:bg-crimson active:scale-95 text-center cursor-pointer;
+}
+
+.btn-secondary-sm {
+  @apply border border-burgundy text-burgundy text-sm font-semibold px-4 py-2 rounded-lg transition-all duration-200 hover:bg-burgundy/10 active:scale-95 text-center cursor-pointer;
+}
+
+/* Badges e Badges de desconto */
+.badge-discount {
+  @apply bg-crimson text-white text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider shadow-sm;
+}
+
+.cart-badge {
+  @apply absolute -top-1 -right-1 bg-crimson text-white text-[10px] font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse;
+}
+
+/* Carrossel e Banner */
+.carousel-container-full {
+  @apply relative w-full overflow-hidden aspect-[16/10] md:aspect-[21/9] lg:aspect-[24/7] min-h-[260px] md:min-h-[350px] lg:min-h-[420px] shadow-sm;
+}
+
+.carousel-slide {
+  @apply absolute inset-0 w-full h-full transition-opacity duration-700 ease-in-out flex items-center;
+}
+
+.carousel-overlay {
+  background: linear-gradient(90deg, rgba(0, 0, 0, 0.65) 0%, rgba(0, 0, 0, 0.25) 100%);
+  @apply absolute inset-0 z-10;
+}
+
+.carousel-dots {
+  @apply absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2.5 z-20 pt-1;
+}
+
+.carousel-dot {
+  @apply w-2 h-2 rounded-full bg-white/40 transition-all duration-300 cursor-pointer;
+}
+
+.carousel-dot-active {
+  @apply w-6 bg-white rounded-full;
+}
+
+/* Galeria de Fotos do Produto */
+.gallery-thumbnail {
+  @apply w-14 h-14 rounded-lg object-cover cursor-pointer border-2 transition-all duration-200;
+}
+
+.gallery-thumbnail-active {
+  @apply border-burgundy scale-105 shadow-sm;
+}
+
+.gallery-thumbnail-inactive {
+  @apply border-transparent opacity-60 hover:opacity-100;
+}
+
+/* Pílulas de Categoria */
+.category-pill {
+  @apply px-4 py-2 rounded-full font-medium transition-all duration-200 text-sm whitespace-nowrap cursor-pointer select-none;
+}
+
+.category-pill-active {
+  @apply bg-burgundy text-white shadow-md scale-105;
+}
+
+.category-pill-inactive {
+  @apply bg-white/40 text-burgundy border border-burgundy/10 hover:bg-white/60;
+}
+
+/* Carrinho Lateral Drawer */
+.cart-drawer-overlay {
+  background: rgba(0, 0, 0, 0.4);
+  @apply fixed inset-0 z-50 backdrop-blur-sm transition-opacity duration-300;
+}
+
+.cart-drawer {
+  background: lightgray;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-left: 1px solid rgba(120, 0, 0, 0.15);
+  @apply fixed right-0 top-0 h-full w-full max-w-md shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-out;
+}
+
+/* Formulários e Inputs */
+.form-card {
+  background: rgba(255, 255, 255, 0.55);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  @apply rounded-2xl p-5 shadow-sm border border-burgundy/5;
+}
+
+.form-label {
+  @apply block text-sm font-semibold text-burgundy mb-1.5;
+}
+
+.form-input {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(120, 0, 0, 0.15);
+  @apply w-full px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy transition-all text-sm;
+}
+
+.form-select {
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(120, 0, 0, 0.15);
+  @apply w-full px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy transition-all text-sm appearance-none bg-no-repeat bg-right;
+}
+
+/* Utilitários Gerais */
+.text-stroke-title {
+  @apply text-burgundy font-bold tracking-tight;
+}
+
+.mobile-navigation-bar {
+  background: rgba(253, 240, 213, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(120, 0, 0, 0.1);
+  @apply fixed bottom-0 left-0 right-0 h-16 flex items-center justify-around z-40 md:hidden shadow-lg;
+}
+
+.mobile-nav-item {
+  @apply flex flex-col items-center justify-center w-16 h-full text-burgundy/70 transition-colors duration-200;
+}
+
+.mobile-nav-item-active {
+  @apply text-burgundy font-bold scale-105;
+}
