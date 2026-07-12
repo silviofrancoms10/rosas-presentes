@@ -4,15 +4,13 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "run-p type-check \"build-only {@}\" --",
-    "preview": "vite preview",
-    "build-only": "vite build",
-    "type-check": "vue-tsc --build",
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache",
-    "format": "oxfmt src/"
+    "lint:eslint": "eslint . --fix --cache"
   },
   "dependencies": {
     "pinia": "^3.0.4",
@@ -20,6 +18,7 @@
     "vue-router": "^5.1.0"
   },
   "devDependencies": {
+    "@pinia/nuxt": "^0.11.3",
     "@tailwindcss/vite": "^4.3.2",
     "@tsconfig/node24": "^24.0.4",
     "@types/node": "^26.1.1",
@@ -33,6 +32,7 @@
     "eslint-plugin-vue": "~10.9.2",
     "jiti": "^2.7.0",
     "npm-run-all2": "^9.0.2",
+    "nuxt": "^4.4.8",
     "oxfmt": "^0.58.0",
     "oxlint": "~1.73.0",
     "tailwindcss": "^4.3.2",
