@@ -20,10 +20,10 @@ const mapsLink =
     ></div>
 
     <div
-      class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10 relative z-10"
+      class="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 relative z-10"
     >
       <!-- Column 1: Store & Contact -->
-      <div class="space-y-5">
+      <div class="flex-1 space-y-5">
         <div class="flex items-center space-x-2">
           <span class="text-2xl font-bold tracking-tight text-white drop-shadow-sm"
             >🌹 Rosas Presentes</span
@@ -58,31 +58,6 @@ const mapsLink =
             >
           </a>
 
-          <!-- Telephone Link -->
-          <a
-            :href="phoneLink"
-            class="flex items-center space-x-3 text-sm text-neutral-300 hover:text-white transition-colors group w-max"
-          >
-            <div
-              class="p-2 bg-white/5 group-hover:bg-white/10 rounded-xl transition-colors border border-white/5"
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="h-5 w-5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M3 5a2 2 0 012-2h3.28a1 1 0 01.94.725l.548 2.2a1 1 0 01-.321.988l-1.305.98a10.582 10.582 0 004.872 4.872l.98-1.305a1 1 0 01.988-.321l2.2.548a1 1 0 01.725.94V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-                />
-              </svg>
-            </div>
-            <span>Ligue para Nós</span>
-          </a>
 
           <!-- Address Link -->
           <a
@@ -123,7 +98,7 @@ const mapsLink =
       </div>
 
       <!-- Column 2: Notice & Working Hours -->
-      <div class="space-y-5 lg:col-span-2">
+      <div class="flex-1 space-y-5">
         <h4 class="text-lg font-bold text-white tracking-wide border-b border-white/10 pb-2">
           Avisos e Funcionamento
         </h4>

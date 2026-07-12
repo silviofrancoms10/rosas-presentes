@@ -622,12 +622,12 @@ const _routes = [
   {
     name: "checkout",
     path: "/checkout",
-    component: () => import('./checkout-CWWHb-ov.mjs')
+    component: () => import('./checkout-DAmmWk7k.mjs')
   },
   {
     name: "index",
     path: "/",
-    component: () => import('./index-_iA28cMT.mjs')
+    component: () => import('./index-BS8cLMbD.mjs')
   }
 ];
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};
@@ -2192,8 +2192,15 @@ function normalizeSlot(slot, data) {
   return slotContent.length === 1 ? h(slotContent[0]) : h(Fragment, void 0, slotContent);
 }
 const useCartStore = defineStore("cart", () => {
-  const items = ref([]);
+  function _readFromStorage() {
+    return [];
+  }
+  const items = ref(_readFromStorage());
   function loadCart() {
+    const saved = _readFromStorage();
+    if (saved.length > 0) {
+      items.value = saved;
+    }
   }
   watch(
     items,

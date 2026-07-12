@@ -8,22 +8,29 @@ export interface CartItem {
 }
 
 export const useCartStore = defineStore('cart', () => {
-  const items = ref<CartItem[]>([])
+  // Inicializa diretamente do localStorage na criação do store (client-side)
+  function _readFromStorage(): CartItem[] {
+    if (import.meta.client) {
+      try {
+        const saved = localStorage.getItem('rosas_presentes_cart')
+        if (saved) return JSON.parse(saved) as CartItem[]
+      } catch (e) {
+        console.error('Failed to parse saved cart data', e)
+      }
+    }
+    return []
+  }
+
+  const items = ref<CartItem[]>(_readFromStorage())
 
   function loadCart() {
-    if (import.meta.client) {
-      const savedCart = localStorage.getItem('rosas_presentes_cart')
-      if (savedCart) {
-        try {
-          items.value = JSON.parse(savedCart)
-        } catch (e) {
-          console.error('Failed to parse saved cart data', e)
-        }
-      }
+    const saved = _readFromStorage()
+    if (saved.length > 0) {
+      items.value = saved
     }
   }
 
-  // Persist cart to localStorage whenever it changes (client-only)
+  // Persiste no localStorage sempre que o carrinho mudar (client-only)
   watch(
     items,
     (newItems) => {

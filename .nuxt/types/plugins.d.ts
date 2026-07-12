@@ -23,7 +23,8 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@8.1.4_@types+node@26.1.1_esbuild@0.28.1_jiti@2.7.0_terser@5.4_f916916bfd69f4188e9a84a8100f5129/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.server.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@8.1.4_@types+node@26.1.1_esbuild@0.28.1_jiti@2.7.0_terser@5.4_f916916bfd69f4188e9a84a8100f5129/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/warn.dev.server.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")>
+  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
+  InjectionType<typeof import("../../plugins/cart-persist.client")>
 
 declare module '#app' {
   interface NuxtApp extends NuxtAppInjections { }

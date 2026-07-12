@@ -50,11 +50,11 @@ watch(
 
 // Categories with background images
 const categories = [
-  { id: 'todos', name: '🌸 Todos', image: '/images/categorias/categoria-todos.jpg' },
-  { id: 'destaques', name: '✨ Destaques', image: '/images/categorias/categoria-todos.jpg' },
-  { id: 'buques', name: '💐 Buquês', image: '/images/categorias/categoria-buques.jpg' },
-  { id: 'cestas', name: '🧺 Cestas', image: '/images/categorias/categoria-cestas.jpg' },
-  { id: 'presentes', name: '🎁 Presentes', image: '/images/categorias/categoria-presentes.jpg' },
+  { id: 'todos', name: 'Todos', image: '/images/categorias/categoria-todos.jpg' },
+  { id: 'destaques', name: 'Destaques', image: '/images/categorias/categoria-todos.jpg' },
+  { id: 'buques', name: 'Buquês', image: '/images/categorias/categoria-buques.jpg' },
+  { id: 'cestas', name: 'Cestas', image: '/images/categorias/categoria-cestas.jpg' },
+  { id: 'presentes', name: 'Presentes', image: '/images/categorias/categoria-presentes.jpg' },
 ]
 
 // Navigation / Methods
@@ -393,7 +393,7 @@ onUnmounted(() => {
             </div>
 
             <!-- Image Wrap -->
-            <div class="aspect-square w-full rounded-xl overflow-hidden mb-3 bg-white/20 relative">
+            <div class="aspect-[9/16] w-full rounded-xl overflow-hidden mb-3 bg-neutral-200/50 relative">
               <img
                 :src="getFirstImage(product)"
                 :alt="product.name"

@@ -4028,7 +4028,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "765c9bfa-e956-4bfe-aa57-adb2b89f6c77",
+    "buildId": "d864e53e-d1f1-4d89-a92b-98bc14026b30",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -4505,201 +4505,201 @@ const plugins = [
 ];
 
 const assets = {
-  "/_nuxt/CFqLXwdq.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"24d7-IUcCBo/P2z9WhKBwjCn2wOWpJwY\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 9431,
-    "path": "../public/_nuxt/CFqLXwdq.js"
-  },
-  "/_nuxt/B1eTMMEo.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"5adc-k74RohCebqzLWDgCoTmPApUNMT8\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 23260,
-    "path": "../public/_nuxt/B1eTMMEo.js"
-  },
   "/favicon.ico": {
     "type": "image/vnd.microsoft.icon",
     "etag": "\"10be-wGBe/tk27iYAKE5kgFIdBvpk+HI\"",
-    "mtime": "2026-07-12T19:38:08.233Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 4286,
     "path": "../public/favicon.ico"
   },
-  "/_nuxt/D1yhYpEZ.js": {
+  "/_nuxt/B7fFVzSD.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"146-14lbLeFu+xGJOZ8q+6AgU1mDB7E\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
+    "etag": "\"146-2uklWH0eEAs4YAtFclcil3fSMBI\"",
+    "mtime": "2026-07-12T20:00:32.631Z",
     "size": 326,
-    "path": "../public/_nuxt/D1yhYpEZ.js"
+    "path": "../public/_nuxt/B7fFVzSD.js"
+  },
+  "/_nuxt/BD4oxO0D.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"24d7-V2BgPtRjzJOgQXdZAiXQ29aqHOI\"",
+    "mtime": "2026-07-12T20:00:32.635Z",
+    "size": 9431,
+    "path": "../public/_nuxt/BD4oxO0D.js"
+  },
+  "/_nuxt/CfERW7-m.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"db1-yEeuJm5fBqxcge1y8INBfVcMfX8\"",
+    "mtime": "2026-07-12T20:00:32.637Z",
+    "size": 3505,
+    "path": "../public/_nuxt/CfERW7-m.js"
   },
   "/_nuxt/DlAUqK2U.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"5b-eFCz/UrraTh721pgAl0VxBNR1es\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
+    "mtime": "2026-07-12T20:00:32.637Z",
     "size": 91,
     "path": "../public/_nuxt/DlAUqK2U.js"
   },
-  "/_nuxt/DO5rVEAs.js": {
+  "/_nuxt/C2QDbTz2.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"db1-r/VMZuMYBj8YYByDFtfTCeWWFK8\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 3505,
-    "path": "../public/_nuxt/DO5rVEAs.js"
+    "etag": "\"2b79-TH0LMBb7z+a7seNCUFOSp6zLdqc\"",
+    "mtime": "2026-07-12T20:00:32.635Z",
+    "size": 11129,
+    "path": "../public/_nuxt/C2QDbTz2.js"
   },
-  "/_nuxt/BMkMDTSw.js": {
+  "/_nuxt/BxRpYXGZ.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"5a4b-6GyRmbbubAZN5dRlWR+QgZtWgzQ\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 23115,
-    "path": "../public/_nuxt/BMkMDTSw.js"
+    "etag": "\"5a2f-YaJV+i9MvDsu5N+KJTzLNC6FAp0\"",
+    "mtime": "2026-07-12T20:00:32.637Z",
+    "size": 23087,
+    "path": "../public/_nuxt/BxRpYXGZ.js"
   },
   "/_nuxt/error-404.oz9wUqPg.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"97e-3s/gV3hQiYCG4Oanld8Kkk8eGm8\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
+    "mtime": "2026-07-12T20:00:32.637Z",
     "size": 2430,
     "path": "../public/_nuxt/error-404.oz9wUqPg.css"
   },
   "/_nuxt/error-500.BAq6mZr2.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"773-8tGFrGsiSArJyC9hbS28kR3iLA0\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
+    "mtime": "2026-07-12T20:00:32.637Z",
     "size": 1907,
     "path": "../public/_nuxt/error-500.BAq6mZr2.css"
   },
-  "/_nuxt/index.Cm26UXDM.css": {
+  "/_nuxt/index.jKBsKm4C.css": {
     "type": "text/css; charset=utf-8",
-    "etag": "\"90-Y9LMh+GdmFmp3A9NOM7BVOTFRo8\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
+    "etag": "\"90-4SQnCxYCoFCBPuriyg4z5Lenk3k\"",
+    "mtime": "2026-07-12T20:00:32.637Z",
     "size": 144,
-    "path": "../public/_nuxt/index.Cm26UXDM.css"
+    "path": "../public/_nuxt/index.jKBsKm4C.css"
   },
-  "/_nuxt/builds/latest.json": {
-    "type": "application/json",
-    "etag": "\"47-cm0ORHTqsGI7p1aPBr7OBk2sRJo\"",
-    "mtime": "2026-07-12T19:38:08.221Z",
-    "size": 71,
-    "path": "../public/_nuxt/builds/latest.json"
-  },
-  "/_nuxt/c_HIbBtB.js": {
+  "/_nuxt/DsLxw1FR.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"2e7d-li1WQSpXMgwtKZjQI+KVe+Dn8PA\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 11901,
-    "path": "../public/_nuxt/c_HIbBtB.js"
+    "etag": "\"5aca-g9T0VeHgQ8IDYp2xz2AECaHuME8\"",
+    "mtime": "2026-07-12T20:00:32.637Z",
+    "size": 23242,
+    "path": "../public/_nuxt/DsLxw1FR.js"
   },
-  "/_nuxt/entry.CXs_hSux.css": {
+  "/_nuxt/entry.D4TLU7nS.css": {
     "type": "text/css; charset=utf-8",
-    "etag": "\"ea72-OZcUCxSORDsZU81VEFP9oFRO6UY\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 60018,
-    "path": "../public/_nuxt/entry.CXs_hSux.css"
+    "etag": "\"e62a-RtYxUY+OQbOzDe9BgX+dWn4KfMs\"",
+    "mtime": "2026-07-12T20:00:32.637Z",
+    "size": 58922,
+    "path": "../public/_nuxt/entry.D4TLU7nS.css"
   },
-  "/_nuxt/CyZL5EZ2.js": {
+  "/_nuxt/BCPwsmuL.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"2e732-eK8MLkIM5F1n40oa7Yx18X98Rgk\"",
-    "mtime": "2026-07-12T19:38:08.229Z",
-    "size": 190258,
-    "path": "../public/_nuxt/CyZL5EZ2.js"
+    "etag": "\"2e789-AmtIskoQa8eWYQLy5k63OmR2kV0\"",
+    "mtime": "2026-07-12T20:00:32.635Z",
+    "size": 190345,
+    "path": "../public/_nuxt/BCPwsmuL.js"
   },
   "/images/categorias/categoria-buques.jpg": {
     "type": "image/jpeg",
     "etag": "\"ea326-6anhUBpKWi33uxLJTg7aGfZg2t0\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 959270,
     "path": "../public/images/categorias/categoria-buques.jpg"
   },
   "/images/categorias/categoria-presentes.jpg": {
     "type": "image/jpeg",
     "etag": "\"ca4e1-BXAiD2NopVarp2wG9gAMp8NVx6s\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 828641,
     "path": "../public/images/categorias/categoria-presentes.jpg"
-  },
-  "/images/categorias/categoria-cestas.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"f44cc-d456flSbgWboBiPqVGYQhno8ICE\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
-    "size": 1000652,
-    "path": "../public/images/categorias/categoria-cestas.jpg"
-  },
-  "/images/produtos/arranjo-girassois.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"bd02d-dJai8EmKSuE4k0thuxw+WOQfRdA\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
-    "size": 774189,
-    "path": "../public/images/produtos/arranjo-girassois.jpg"
   },
   "/images/produtos/buque-rosas-vermelhas.jpg": {
     "type": "image/jpeg",
     "etag": "\"85a95-67MYahY+lT7ldny2HlarAwR4ikw\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 547477,
     "path": "../public/images/produtos/buque-rosas-vermelhas.jpg"
   },
-  "/images/produtos/buque-rosas-vermelhas-detail.jpg": {
+  "/images/produtos/arranjo-girassois.jpg": {
     "type": "image/jpeg",
-    "etag": "\"c36d1-J//EJGuv6TIul7rTVlLAP9r3O08\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
-    "size": 800465,
-    "path": "../public/images/produtos/buque-rosas-vermelhas-detail.jpg"
+    "etag": "\"bd02d-dJai8EmKSuE4k0thuxw+WOQfRdA\"",
+    "mtime": "2026-07-12T20:00:32.641Z",
+    "size": 774189,
+    "path": "../public/images/produtos/arranjo-girassois.jpg"
   },
   "/images/produtos/box-vinho-rosas.jpg": {
     "type": "image/jpeg",
     "etag": "\"c3408-bcSu5P5f2LPvvMFKRXtNuxCYD4c\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 799752,
     "path": "../public/images/produtos/box-vinho-rosas.jpg"
+  },
+  "/images/categorias/categoria-cestas.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"f44cc-d456flSbgWboBiPqVGYQhno8ICE\"",
+    "mtime": "2026-07-12T20:00:32.641Z",
+    "size": 1000652,
+    "path": "../public/images/categorias/categoria-cestas.jpg"
+  },
+  "/images/produtos/buque-rosas-vermelhas-detail.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"c36d1-J//EJGuv6TIul7rTVlLAP9r3O08\"",
+    "mtime": "2026-07-12T20:00:32.641Z",
+    "size": 800465,
+    "path": "../public/images/produtos/buque-rosas-vermelhas-detail.jpg"
   },
   "/images/produtos/cesta-cafe-premium-detail.jpg": {
     "type": "image/jpeg",
     "etag": "\"c4921-elpZEN68PyDpUrjANy3eRMRGtIM\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 805153,
     "path": "../public/images/produtos/cesta-cafe-premium-detail.jpg"
+  },
+  "/images/produtos/rosa-encantada-detail.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"a2ac3-ZE8JR2CxiMny+ZhZ6X4xAIajHaw\"",
+    "mtime": "2026-07-12T20:00:32.641Z",
+    "size": 666307,
+    "path": "../public/images/produtos/rosa-encantada-detail.jpg"
   },
   "/images/produtos/cesta-cafe-premium.jpg": {
     "type": "image/jpeg",
     "etag": "\"d75c5-ZumiubqGrBRDut2c6M6cfwSlIJY\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 882117,
     "path": "../public/images/produtos/cesta-cafe-premium.jpg"
   },
   "/images/produtos/cesta-chocolates.jpg": {
     "type": "image/jpeg",
     "etag": "\"e415b-SSOQyFNujryTlwX7gicOjNkAg6o\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 934235,
     "path": "../public/images/produtos/cesta-chocolates.jpg"
   },
   "/images/categorias/categoria-todos.jpg": {
     "type": "image/jpeg",
     "etag": "\"10ebe0-VPIWnV+w9UpOIDZnh2/PXeMHjb8\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 1108960,
     "path": "../public/images/categorias/categoria-todos.jpg"
   },
-  "/_nuxt/builds/meta/765c9bfa-e956-4bfe-aa57-adb2b89f6c77.json": {
+  "/_nuxt/builds/latest.json": {
     "type": "application/json",
-    "etag": "\"58-ttut3bP/ERr+GIqJpZVkx4Bq+Hg\"",
-    "mtime": "2026-07-12T19:38:08.218Z",
+    "etag": "\"47-IvceOdEv1NIFzrbwPfwVcAPfOV4\"",
+    "mtime": "2026-07-12T20:00:32.627Z",
+    "size": 71,
+    "path": "../public/_nuxt/builds/latest.json"
+  },
+  "/_nuxt/builds/meta/d864e53e-d1f1-4d89-a92b-98bc14026b30.json": {
+    "type": "application/json",
+    "etag": "\"58-zczsWMLw/p3GmYs4TMFV1K5C8iQ\"",
+    "mtime": "2026-07-12T20:00:32.622Z",
     "size": 88,
-    "path": "../public/_nuxt/builds/meta/765c9bfa-e956-4bfe-aa57-adb2b89f6c77.json"
+    "path": "../public/_nuxt/builds/meta/d864e53e-d1f1-4d89-a92b-98bc14026b30.json"
   },
   "/images/produtos/rosa-encantada.jpg": {
     "type": "image/jpeg",
     "etag": "\"af3dc-uKP0h2DmveezZEnPb97YODUXgQs\"",
-    "mtime": "2026-07-12T19:38:08.233Z",
+    "mtime": "2026-07-12T20:00:32.641Z",
     "size": 717788,
     "path": "../public/images/produtos/rosa-encantada.jpg"
-  },
-  "/images/produtos/rosa-encantada-detail.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"a2ac3-ZE8JR2CxiMny+ZhZ6X4xAIajHaw\"",
-    "mtime": "2026-07-12T19:38:08.232Z",
-    "size": 666307,
-    "path": "../public/images/produtos/rosa-encantada-detail.jpg"
   }
 };
 

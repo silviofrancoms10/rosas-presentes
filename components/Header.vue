@@ -7,11 +7,11 @@ const route = useRoute()
 const cartStore = useCartStore()
 
 const categories = [
-  { id: 'todos', name: '🌸 Todos' },
-  { id: 'destaques', name: '✨ Destaques' },
-  { id: 'buques', name: '💐 Buquês' },
-  { id: 'cestas', name: '🧺 Cestas' },
-  { id: 'presentes', name: '🎁 Presentes' }
+  { id: 'todos', name: 'Todos' },
+  { id: 'destaques', name: 'Destaques' },
+  { id: 'buques', name: 'Buquês' },
+  { id: 'cestas', name: 'Cestas' },
+  { id: 'presentes', name: 'Presentes' }
 ]
 
 const currentCategory = computed(() => {
@@ -49,7 +49,7 @@ const emit = defineEmits(['toggle-cart'])
           :class="route.path === '/checkout' ? 'text-white border-white' : 'text-almond/75 border-transparent'"
           @click="router.push('/checkout')"
         >
-          💳 Checkout
+          Checkout
         </button>
       </nav>
       

@@ -185,7 +185,7 @@ function goBackHome() {
               Número do Pedido: {{ orderNumber }}
             </div>
             <div class="text-xs text-neutral-600 mt-1 bg-neutral-50 border border-neutral-100 rounded-lg px-4 py-2">
-              📅 Entrega programada para: <strong class="text-burgundy">{{ deliveryDate }}</strong>
+              Entrega programada para: <strong class="text-burgundy">{{ deliveryDate }}</strong>
               <span v-if="deliveryTime"> às <strong class="text-burgundy">{{ deliveryTime }}</strong></span>
             </div>
           </div>
@@ -220,7 +220,7 @@ function goBackHome() {
               <!-- Customer Info -->
               <div class="form-card space-y-4 relative z-10">
                 <h3 class="font-bold text-burgundy text-base border-b border-burgundy/10 pb-2">
-                  👤 Seus Dados
+                  Seus Dados
                 </h3>
                 
                 <div>
@@ -255,7 +255,7 @@ function goBackHome() {
               <!-- Delivery Details -->
               <div class="form-card space-y-4 !overflow-visible relative z-30">
                 <h3 class="font-bold text-burgundy text-base border-b border-burgundy/10 pb-2">
-                  🚚 Detalhes da Entrega (Presente)
+                  Detalhes da Entrega (Presente)
                 </h3>
                 
                 <div>
@@ -393,7 +393,7 @@ function goBackHome() {
               <!-- Payment Details -->
               <div class="form-card space-y-4 relative z-10">
                 <h3 class="font-bold text-burgundy text-base border-b border-burgundy/10 pb-2">
-                  💳 Método de Pagamento
+                  Método de Pagamento
                 </h3>
                 
                 <div class="grid grid-cols-2 gap-3">
@@ -485,7 +485,7 @@ function goBackHome() {
           <div class="col-span-1 md:col-span-2 space-y-4">
             <div class="form-card space-y-4 sticky top-24">
               <h3 class="font-bold text-burgundy text-base border-b border-burgundy/10 pb-2">
-                🛍️ Resumo do Pedido
+                Resumo do Pedido
               </h3>
               
               <div class="max-h-[300px] overflow-y-auto space-y-3 pr-1">
