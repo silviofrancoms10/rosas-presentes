@@ -25,7 +25,8 @@ const products$1 = [
 			"/images/produtos/buque-rosas-vermelhas-detail.jpg"
 		],
 		featured: true,
-		installments: "3x de R$ 65,30 sem juros"
+		installments: "3x de R$ 65,30 sem juros",
+		oldPrice: 250
 	},
 	{
 		id: "flor-02",
@@ -40,7 +41,7 @@ const products$1 = [
 		images: [
 			"/images/produtos/arranjo-girassois.jpg"
 		],
-		featured: false,
+		featured: true,
 		installments: "3x de R$ 46,66 sem juros"
 	},
 	{
@@ -112,6 +113,25 @@ const products$1 = [
 		],
 		featured: false,
 		installments: "3x de R$ 98,33 sem juros"
+	},
+	{
+		id: "bromelia-01",
+		name: "Bomelia",
+		description: "Bromélia Linda",
+		price: 352,
+		oldPrice: 529,
+		category: "buques",
+		categories: [
+			"buques",
+			"presentes",
+			"destaques"
+		],
+		image: "/images/produtos/screenshot-from-2026-07-12-16-18-56.png",
+		images: [
+			"/images/produtos/screenshot-from-2026-07-12-16-18-56.png"
+		],
+		featured: true,
+		installments: "3x de 117.34 Sem Juros"
 	}
 ];
 

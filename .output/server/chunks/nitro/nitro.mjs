@@ -790,6 +790,84 @@ function isError(input) {
   return input?.constructor?.__h3_error__ === true;
 }
 
+function parse(multipartBodyBuffer, boundary) {
+  let lastline = "";
+  let state = 0 /* INIT */;
+  let buffer = [];
+  const allParts = [];
+  let currentPartHeaders = [];
+  for (let i = 0; i < multipartBodyBuffer.length; i++) {
+    const prevByte = i > 0 ? multipartBodyBuffer[i - 1] : null;
+    const currByte = multipartBodyBuffer[i];
+    const newLineChar = currByte === 10 || currByte === 13;
+    if (!newLineChar) {
+      lastline += String.fromCodePoint(currByte);
+    }
+    const newLineDetected = currByte === 10 && prevByte === 13;
+    if (0 /* INIT */ === state && newLineDetected) {
+      if ("--" + boundary === lastline) {
+        state = 1 /* READING_HEADERS */;
+      }
+      lastline = "";
+    } else if (1 /* READING_HEADERS */ === state && newLineDetected) {
+      if (lastline.length > 0) {
+        const i2 = lastline.indexOf(":");
+        if (i2 > 0) {
+          const name = lastline.slice(0, i2).toLowerCase();
+          const value = lastline.slice(i2 + 1).trim();
+          currentPartHeaders.push([name, value]);
+        }
+      } else {
+        state = 2 /* READING_DATA */;
+        buffer = [];
+      }
+      lastline = "";
+    } else if (2 /* READING_DATA */ === state) {
+      if (lastline.length > boundary.length + 4) {
+        lastline = "";
+      }
+      if ("--" + boundary === lastline) {
+        const j = buffer.length - lastline.length;
+        const part = buffer.slice(0, j - 1);
+        allParts.push(process$1(part, currentPartHeaders));
+        buffer = [];
+        currentPartHeaders = [];
+        lastline = "";
+        state = 3 /* READING_PART_SEPARATOR */;
+      } else {
+        buffer.push(currByte);
+      }
+      if (newLineDetected) {
+        lastline = "";
+      }
+    } else if (3 /* READING_PART_SEPARATOR */ === state && newLineDetected) {
+      state = 1 /* READING_HEADERS */;
+    }
+  }
+  return allParts;
+}
+function process$1(data, headers) {
+  const dataObj = {};
+  const contentDispositionHeader = headers.find((h) => h[0] === "content-disposition")?.[1] || "";
+  for (const i of contentDispositionHeader.split(";")) {
+    const s = i.split("=");
+    if (s.length !== 2) {
+      continue;
+    }
+    const key = (s[0] || "").trim();
+    if (key === "name" || key === "filename") {
+      const _value = (s[1] || "").trim().replace(/"/g, "");
+      dataObj[key] = Buffer.from(_value, "latin1").toString("utf8");
+    }
+  }
+  const contentType = headers.find((h) => h[0] === "content-type")?.[1] || "";
+  if (contentType) {
+    dataObj.type = contentType;
+  }
+  dataObj.data = Buffer.from(data);
+  return dataObj;
+}
+
 function getQuery(event) {
   return getQuery$1(event.path || "");
 }
@@ -824,6 +902,7 @@ function getRequestHeader(event, name) {
   const value = headers[name.toLowerCase()];
   return value;
 }
+const getHeader = getRequestHeader;
 function getRequestHost(event, opts = {}) {
   if (opts.xForwardedHost) {
     const _header = event.node.req.headers["x-forwarded-host"];
@@ -851,6 +930,7 @@ function getRequestURL(event, opts = {}) {
 }
 
 const RawBodySymbol = Symbol.for("h3RawBody");
+const ParsedBodySymbol = Symbol.for("h3ParsedBody");
 const PayloadMethods$1 = ["PATCH", "POST", "PUT", "DELETE"];
 function readRawBody(event, encoding = "utf8") {
   assertMethod(event, PayloadMethods$1);
@@ -920,6 +1000,41 @@ function readRawBody(event, encoding = "utf8") {
   const result = encoding ? promise.then((buff) => buff.toString(encoding)) : promise;
   return result;
 }
+async function readBody(event, options = {}) {
+  const request = event.node.req;
+  if (hasProp(request, ParsedBodySymbol)) {
+    return request[ParsedBodySymbol];
+  }
+  const contentType = request.headers["content-type"] || "";
+  const body = await readRawBody(event);
+  let parsed;
+  if (contentType === "application/json") {
+    parsed = _parseJSON(body, options.strict ?? true);
+  } else if (contentType.startsWith("application/x-www-form-urlencoded")) {
+    parsed = _parseURLEncodedBody(body);
+  } else if (contentType.startsWith("text/")) {
+    parsed = body;
+  } else {
+    parsed = _parseJSON(body, options.strict ?? false);
+  }
+  request[ParsedBodySymbol] = parsed;
+  return parsed;
+}
+async function readMultipartFormData(event) {
+  const contentType = getRequestHeader(event, "content-type");
+  if (!contentType || !contentType.startsWith("multipart/form-data")) {
+    return;
+  }
+  const boundary = contentType.match(/boundary=([^;]*)(;|$)/i)?.[1];
+  if (!boundary) {
+    return;
+  }
+  const body = await readRawBody(event, false);
+  if (!body) {
+    return;
+  }
+  return parse(body, boundary);
+}
 function getRequestWebStream(event) {
   if (!PayloadMethods$1.includes(event.method)) {
     return;
@@ -953,6 +1068,35 @@ function getRequestWebStream(event) {
       });
     }
   });
+}
+function _parseJSON(body = "", strict) {
+  if (!body) {
+    return void 0;
+  }
+  try {
+    return destr(body, { strict });
+  } catch {
+    throw createError$1({
+      statusCode: 400,
+      statusMessage: "Bad Request",
+      message: "Invalid JSON body"
+    });
+  }
+}
+function _parseURLEncodedBody(body) {
+  const form = new URLSearchParams(body);
+  const parsedForm = /* @__PURE__ */ Object.create(null);
+  for (const [key, value] of form.entries()) {
+    if (hasProp(parsedForm, key)) {
+      if (!Array.isArray(parsedForm[key])) {
+        parsedForm[key] = [parsedForm[key]];
+      }
+      parsedForm[key].push(value);
+    } else {
+      parsedForm[key] = value;
+    }
+  }
+  return parsedForm;
 }
 
 function handleCacheHeaders(event, opts) {
@@ -4028,7 +4172,7 @@ function _expandFromEnv(value) {
 const _inlineRuntimeConfig = {
   "app": {
     "baseURL": "/",
-    "buildId": "d864e53e-d1f1-4d89-a92b-98bc14026b30",
+    "buildId": "90e48808-0aa2-4c13-9cc8-f4f375ed897a",
     "buildAssetsDir": "/_nuxt/",
     "cdnURL": ""
   },
@@ -4508,198 +4652,219 @@ const assets = {
   "/favicon.ico": {
     "type": "image/vnd.microsoft.icon",
     "etag": "\"10be-wGBe/tk27iYAKE5kgFIdBvpk+HI\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 4286,
     "path": "../public/favicon.ico"
   },
-  "/_nuxt/B7fFVzSD.js": {
+  "/_nuxt/C-iIanSR.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"146-2uklWH0eEAs4YAtFclcil3fSMBI\"",
-    "mtime": "2026-07-12T20:00:32.631Z",
+    "etag": "\"146-Ef/Ip+zMqMCfvy294eqkMeN8mn8\"",
+    "mtime": "2026-07-12T20:33:02.888Z",
     "size": 326,
-    "path": "../public/_nuxt/B7fFVzSD.js"
+    "path": "../public/_nuxt/C-iIanSR.js"
   },
-  "/_nuxt/BD4oxO0D.js": {
+  "/_nuxt/BZoR5wLZ.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"24d7-V2BgPtRjzJOgQXdZAiXQ29aqHOI\"",
-    "mtime": "2026-07-12T20:00:32.635Z",
+    "etag": "\"24d7-nf5H+djcK410w1CuZ2ZDlpH+Ks4\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
     "size": 9431,
-    "path": "../public/_nuxt/BD4oxO0D.js"
-  },
-  "/_nuxt/CfERW7-m.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"db1-yEeuJm5fBqxcge1y8INBfVcMfX8\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
-    "size": 3505,
-    "path": "../public/_nuxt/CfERW7-m.js"
+    "path": "../public/_nuxt/BZoR5wLZ.js"
   },
   "/_nuxt/DlAUqK2U.js": {
     "type": "text/javascript; charset=utf-8",
     "etag": "\"5b-eFCz/UrraTh721pgAl0VxBNR1es\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
+    "mtime": "2026-07-12T20:33:02.888Z",
     "size": 91,
     "path": "../public/_nuxt/DlAUqK2U.js"
   },
-  "/_nuxt/C2QDbTz2.js": {
+  "/_nuxt/Bwb__4Ru.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"2b79-TH0LMBb7z+a7seNCUFOSp6zLdqc\"",
-    "mtime": "2026-07-12T20:00:32.635Z",
-    "size": 11129,
-    "path": "../public/_nuxt/C2QDbTz2.js"
-  },
-  "/_nuxt/BxRpYXGZ.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"5a2f-YaJV+i9MvDsu5N+KJTzLNC6FAp0\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
+    "etag": "\"5a2f-JJVN643iwgt3gncVG1Duk4tNeDU\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
     "size": 23087,
-    "path": "../public/_nuxt/BxRpYXGZ.js"
+    "path": "../public/_nuxt/Bwb__4Ru.js"
+  },
+  "/_nuxt/-Z_DyzCo.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"5acb-q1VLaROxeCOhk8AtOi1/TwmEq4w\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 23243,
+    "path": "../public/_nuxt/-Z_DyzCo.js"
+  },
+  "/_nuxt/admin.DV0W_BmH.css": {
+    "type": "text/css; charset=utf-8",
+    "etag": "\"ac-xiHsMz7a7AzOANnXZY2f6bcrBN4\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 172,
+    "path": "../public/_nuxt/admin.DV0W_BmH.css"
+  },
+  "/_nuxt/GIOsgxyZ.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"2a83-7DZIc3uQ/ihX6rPX8sxgAIv7KuI\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 10883,
+    "path": "../public/_nuxt/GIOsgxyZ.js"
   },
   "/_nuxt/error-404.oz9wUqPg.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"97e-3s/gV3hQiYCG4Oanld8Kkk8eGm8\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
+    "mtime": "2026-07-12T20:33:02.892Z",
     "size": 2430,
     "path": "../public/_nuxt/error-404.oz9wUqPg.css"
   },
   "/_nuxt/error-500.BAq6mZr2.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"773-8tGFrGsiSArJyC9hbS28kR3iLA0\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
+    "mtime": "2026-07-12T20:33:02.892Z",
     "size": 1907,
     "path": "../public/_nuxt/error-500.BAq6mZr2.css"
   },
   "/_nuxt/index.jKBsKm4C.css": {
     "type": "text/css; charset=utf-8",
     "etag": "\"90-4SQnCxYCoFCBPuriyg4z5Lenk3k\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
+    "mtime": "2026-07-12T20:33:02.892Z",
     "size": 144,
     "path": "../public/_nuxt/index.jKBsKm4C.css"
   },
-  "/_nuxt/DsLxw1FR.js": {
+  "/_nuxt/uCOxIW56.js": {
     "type": "text/javascript; charset=utf-8",
-    "etag": "\"5aca-g9T0VeHgQ8IDYp2xz2AECaHuME8\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
-    "size": 23242,
-    "path": "../public/_nuxt/DsLxw1FR.js"
+    "etag": "\"db1-sqo6B3zwgK/QCNQzjhvVriWvL2k\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 3505,
+    "path": "../public/_nuxt/uCOxIW56.js"
   },
-  "/_nuxt/entry.D4TLU7nS.css": {
+  "/_nuxt/builds/latest.json": {
+    "type": "application/json",
+    "etag": "\"47-Z3M15r4qzf35hjIxYKJUXsfm8Ig\"",
+    "mtime": "2026-07-12T20:33:02.884Z",
+    "size": 71,
+    "path": "../public/_nuxt/builds/latest.json"
+  },
+  "/_nuxt/CkkowO3i.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"2eaa5-7ilSQoiYA6s+0uEhz8LI/mLd+3I\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 191141,
+    "path": "../public/_nuxt/CkkowO3i.js"
+  },
+  "/_nuxt/X1SeLtPd.js": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"66d3-JA35m/oKGXxbAS1bgg8v7v3NP+A\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 26323,
+    "path": "../public/_nuxt/X1SeLtPd.js"
+  },
+  "/_nuxt/entry.4WTvZioq.css": {
     "type": "text/css; charset=utf-8",
-    "etag": "\"e62a-RtYxUY+OQbOzDe9BgX+dWn4KfMs\"",
-    "mtime": "2026-07-12T20:00:32.637Z",
-    "size": 58922,
-    "path": "../public/_nuxt/entry.D4TLU7nS.css"
-  },
-  "/_nuxt/BCPwsmuL.js": {
-    "type": "text/javascript; charset=utf-8",
-    "etag": "\"2e789-AmtIskoQa8eWYQLy5k63OmR2kV0\"",
-    "mtime": "2026-07-12T20:00:32.635Z",
-    "size": 190345,
-    "path": "../public/_nuxt/BCPwsmuL.js"
-  },
-  "/images/categorias/categoria-buques.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"ea326-6anhUBpKWi33uxLJTg7aGfZg2t0\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
-    "size": 959270,
-    "path": "../public/images/categorias/categoria-buques.jpg"
+    "etag": "\"f2f4-lAbm9/5HXRYMAE216o3tzR/Ge1g\"",
+    "mtime": "2026-07-12T20:33:02.892Z",
+    "size": 62196,
+    "path": "../public/_nuxt/entry.4WTvZioq.css"
   },
   "/images/categorias/categoria-presentes.jpg": {
     "type": "image/jpeg",
     "etag": "\"ca4e1-BXAiD2NopVarp2wG9gAMp8NVx6s\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 828641,
     "path": "../public/images/categorias/categoria-presentes.jpg"
+  },
+  "/images/categorias/categoria-cestas.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"f44cc-d456flSbgWboBiPqVGYQhno8ICE\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 1000652,
+    "path": "../public/images/categorias/categoria-cestas.jpg"
+  },
+  "/images/categorias/categoria-buques.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"ea326-6anhUBpKWi33uxLJTg7aGfZg2t0\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 959270,
+    "path": "../public/images/categorias/categoria-buques.jpg"
   },
   "/images/produtos/buque-rosas-vermelhas.jpg": {
     "type": "image/jpeg",
     "etag": "\"85a95-67MYahY+lT7ldny2HlarAwR4ikw\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 547477,
     "path": "../public/images/produtos/buque-rosas-vermelhas.jpg"
   },
   "/images/produtos/arranjo-girassois.jpg": {
     "type": "image/jpeg",
     "etag": "\"bd02d-dJai8EmKSuE4k0thuxw+WOQfRdA\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 774189,
     "path": "../public/images/produtos/arranjo-girassois.jpg"
   },
   "/images/produtos/box-vinho-rosas.jpg": {
     "type": "image/jpeg",
     "etag": "\"c3408-bcSu5P5f2LPvvMFKRXtNuxCYD4c\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 799752,
     "path": "../public/images/produtos/box-vinho-rosas.jpg"
-  },
-  "/images/categorias/categoria-cestas.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"f44cc-d456flSbgWboBiPqVGYQhno8ICE\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
-    "size": 1000652,
-    "path": "../public/images/categorias/categoria-cestas.jpg"
   },
   "/images/produtos/buque-rosas-vermelhas-detail.jpg": {
     "type": "image/jpeg",
     "etag": "\"c36d1-J//EJGuv6TIul7rTVlLAP9r3O08\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 800465,
     "path": "../public/images/produtos/buque-rosas-vermelhas-detail.jpg"
   },
   "/images/produtos/cesta-cafe-premium-detail.jpg": {
     "type": "image/jpeg",
     "etag": "\"c4921-elpZEN68PyDpUrjANy3eRMRGtIM\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 805153,
     "path": "../public/images/produtos/cesta-cafe-premium-detail.jpg"
-  },
-  "/images/produtos/rosa-encantada-detail.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"a2ac3-ZE8JR2CxiMny+ZhZ6X4xAIajHaw\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
-    "size": 666307,
-    "path": "../public/images/produtos/rosa-encantada-detail.jpg"
-  },
-  "/images/produtos/cesta-cafe-premium.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"d75c5-ZumiubqGrBRDut2c6M6cfwSlIJY\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
-    "size": 882117,
-    "path": "../public/images/produtos/cesta-cafe-premium.jpg"
-  },
-  "/images/produtos/cesta-chocolates.jpg": {
-    "type": "image/jpeg",
-    "etag": "\"e415b-SSOQyFNujryTlwX7gicOjNkAg6o\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
-    "size": 934235,
-    "path": "../public/images/produtos/cesta-chocolates.jpg"
   },
   "/images/categorias/categoria-todos.jpg": {
     "type": "image/jpeg",
     "etag": "\"10ebe0-VPIWnV+w9UpOIDZnh2/PXeMHjb8\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 1108960,
     "path": "../public/images/categorias/categoria-todos.jpg"
   },
-  "/_nuxt/builds/latest.json": {
+  "/_nuxt/builds/meta/90e48808-0aa2-4c13-9cc8-f4f375ed897a.json": {
     "type": "application/json",
-    "etag": "\"47-IvceOdEv1NIFzrbwPfwVcAPfOV4\"",
-    "mtime": "2026-07-12T20:00:32.627Z",
-    "size": 71,
-    "path": "../public/_nuxt/builds/latest.json"
-  },
-  "/_nuxt/builds/meta/d864e53e-d1f1-4d89-a92b-98bc14026b30.json": {
-    "type": "application/json",
-    "etag": "\"58-zczsWMLw/p3GmYs4TMFV1K5C8iQ\"",
-    "mtime": "2026-07-12T20:00:32.622Z",
+    "etag": "\"58-V3hyGRRFK9PPlpc3t0k/Ihn7wy4\"",
+    "mtime": "2026-07-12T20:33:02.880Z",
     "size": 88,
-    "path": "../public/_nuxt/builds/meta/d864e53e-d1f1-4d89-a92b-98bc14026b30.json"
+    "path": "../public/_nuxt/builds/meta/90e48808-0aa2-4c13-9cc8-f4f375ed897a.json"
+  },
+  "/images/produtos/screenshot-from-2026-07-12-16-18-56.png": {
+    "type": "image/png",
+    "etag": "\"3ec1c-s+oXz1Ww/B9+Vr4ylxwNW7vF/28\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 257052,
+    "path": "../public/images/produtos/screenshot-from-2026-07-12-16-18-56.png"
   },
   "/images/produtos/rosa-encantada.jpg": {
     "type": "image/jpeg",
     "etag": "\"af3dc-uKP0h2DmveezZEnPb97YODUXgQs\"",
-    "mtime": "2026-07-12T20:00:32.641Z",
+    "mtime": "2026-07-12T20:33:02.896Z",
     "size": 717788,
     "path": "../public/images/produtos/rosa-encantada.jpg"
+  },
+  "/images/produtos/cesta-cafe-premium.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"d75c5-ZumiubqGrBRDut2c6M6cfwSlIJY\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 882117,
+    "path": "../public/images/produtos/cesta-cafe-premium.jpg"
+  },
+  "/images/produtos/rosa-encantada-detail.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"a2ac3-ZE8JR2CxiMny+ZhZ6X4xAIajHaw\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 666307,
+    "path": "../public/images/produtos/rosa-encantada-detail.jpg"
+  },
+  "/images/produtos/cesta-chocolates.jpg": {
+    "type": "image/jpeg",
+    "etag": "\"e415b-SSOQyFNujryTlwX7gicOjNkAg6o\"",
+    "mtime": "2026-07-12T20:33:02.896Z",
+    "size": 934235,
+    "path": "../public/images/produtos/cesta-chocolates.jpg"
   }
 };
 
@@ -4895,11 +5060,17 @@ const _shEerr = eventHandler((event) => {
 
 const _SxA8c9 = defineEventHandler(() => {});
 
+const _lazy_1kIxy2 = () => import('../routes/api/admin/login.mjs');
+const _lazy_q_X5hY = () => import('../routes/api/admin/products.mjs');
+const _lazy_CC5GiG = () => import('../routes/api/admin/upload.mjs');
 const _lazy_7F7IFC = () => import('../routes/api/products.mjs');
 const _lazy_XZrLxo = () => import('../routes/renderer.mjs').then(function (n) { return n.r; });
 
 const handlers = [
   { route: '', handler: _shEerr, lazy: false, middleware: true, method: undefined },
+  { route: '/api/admin/login', handler: _lazy_1kIxy2, lazy: true, middleware: false, method: undefined },
+  { route: '/api/admin/products', handler: _lazy_q_X5hY, lazy: true, middleware: false, method: undefined },
+  { route: '/api/admin/upload', handler: _lazy_CC5GiG, lazy: true, middleware: false, method: undefined },
   { route: '/api/products', handler: _lazy_7F7IFC, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_error', handler: _lazy_XZrLxo, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: _SxA8c9, lazy: false, middleware: false, method: undefined },
@@ -5358,5 +5529,5 @@ trapUnhandledNodeErrors();
 setupGracefulShutdown(listener, nitroApp);
 const nodeServer = {};
 
-export { $fetch as $, nodeServer as A, defineRenderHandler as a, destr as b, createError$1 as c, defineEventHandler as d, encodePath as e, getRouteRules as f, getQuery as g, getResponseStatusText as h, getResponseStatus as i, joinRelativeURL as j, useNitroApp as k, decodePath as l, hasProtocol as m, isScriptProtocol as n, joinURL as o, parseURL as p, getContext as q, hash$1 as r, sanitizeStatusCode as s, executeAsync as t, useRuntimeConfig as u, defu as v, withQuery as w, parseQuery as x, withTrailingSlash as y, withoutTrailingSlash as z };
+export { $fetch as $, parseQuery as A, withTrailingSlash as B, withoutTrailingSlash as C, nodeServer as D, getHeader as a, readMultipartFormData as b, createError$1 as c, defineEventHandler as d, encodePath as e, defineRenderHandler as f, getQuery as g, destr as h, getRouteRules as i, joinRelativeURL as j, getResponseStatusText as k, getResponseStatus as l, useNitroApp as m, decodePath as n, hasProtocol as o, parseURL as p, isScriptProtocol as q, readBody as r, joinURL as s, sanitizeStatusCode as t, useRuntimeConfig as u, getContext as v, withQuery as w, hash$1 as x, executeAsync as y, defu as z };
 //# sourceMappingURL=nitro.mjs.map

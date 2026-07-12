@@ -1,3 +1,12 @@
+# Environment variables - NEVER commit these!
+.env
+.env.*
+!.env.example
+
+# Nuxt build output
+.nuxt
+.output
+
 # Logs
 logs
 *.log

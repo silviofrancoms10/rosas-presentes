@@ -1,12 +1,13 @@
 import process from 'node:process';globalThis._importMeta_={url:import.meta.url,env:process.env};import { tmpdir } from 'node:os';
-import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getResponseStatusText } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
+import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getHeader, readMultipartFormData, getResponseStatusText } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
 import { Server } from 'node:http';
-import { resolve, dirname, join } from 'node:path';
+import { resolve, dirname, join, extname } from 'node:path';
 import crypto$1 from 'node:crypto';
 import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@vue+shared@3.5.39/node_modules/@vue/shared/dist/shared.cjs.js';
 import viteNodeEntry_mjs from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs';
 import { viteNodeFetch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
+import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/vue-bundle-renderer@2.3.1/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/destr@2.0.5/node_modules/destr/dist/index.mjs';
@@ -23,7 +24,6 @@ import defu, { defuFn } from 'file:///home/franco/Documents/front/rosas-presente
 import { snakeCase } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/scule@1.3.0/node_modules/scule/dist/index.mjs';
 import { getContext } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/unctx@2.5.0/node_modules/unctx/dist/index.mjs';
 import { toRouteMatcher, createRouter } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/radix3@1.1.2/node_modules/radix3/dist/index.mjs';
-import { readFile } from 'node:fs/promises';
 import consola, { consola as consola$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/index.mjs';
 import { ErrorParser } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/youch-core@0.3.3/node_modules/youch-core/build/index.js';
 import { Youch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/youch@4.1.1/node_modules/youch/build/index.js';
@@ -2734,11 +2734,17 @@ async function getIslandContext(event) {
 	};
 }
 
+const _lazy_1kIxy2 = () => Promise.resolve().then(function () { return login$1; });
+const _lazy_q_X5hY = () => Promise.resolve().then(function () { return products$4; });
+const _lazy_CC5GiG = () => Promise.resolve().then(function () { return upload$1; });
 const _lazy_7F7IFC = () => Promise.resolve().then(function () { return products$1; });
 const _lazy_XZrLxo = () => Promise.resolve().then(function () { return renderer; });
 
 const handlers = [
   { route: '', handler: _shEerr, lazy: false, middleware: true, method: undefined },
+  { route: '/api/admin/login', handler: _lazy_1kIxy2, lazy: true, middleware: false, method: undefined },
+  { route: '/api/admin/products', handler: _lazy_q_X5hY, lazy: true, middleware: false, method: undefined },
+  { route: '/api/admin/upload', handler: _lazy_CC5GiG, lazy: true, middleware: false, method: undefined },
   { route: '/api/products', handler: _lazy_7F7IFC, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_error', handler: _lazy_XZrLxo, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: handler$1, lazy: false, middleware: false, method: undefined },
@@ -3094,6 +3100,143 @@ const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: styles
 }, Symbol.toStringTag, { value: 'Module' }));
 
+const login = defineEventHandler(async (event) => {
+  if (event.method !== "POST") {
+    throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
+  }
+  const body = await readBody(event);
+  const secret = process.env.ADMIN_SECRET;
+  if (!secret || body.password !== secret) {
+    throw createError({ statusCode: 401, statusMessage: "Senha incorreta" });
+  }
+  return { ok: true, token: secret };
+});
+
+const login$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: login
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const PRODUCTS_PATH = resolve("./data/products.json");
+function checkAuth$1(event) {
+  var _a;
+  const secret = process.env.ADMIN_SECRET;
+  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!secret || token !== secret) {
+    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+  }
+}
+const products$3 = defineEventHandler(async (event) => {
+  checkAuth$1(event);
+  const method = event.method;
+  if (method === "GET") {
+    const raw = await readFile(PRODUCTS_PATH, "utf-8");
+    return JSON.parse(raw);
+  }
+  if (method === "POST") {
+    const body = await readBody(event);
+    if (!body.id || !body.name || !body.price) {
+      throw createError({ statusCode: 400, statusMessage: "id, name e price s\xE3o obrigat\xF3rios" });
+    }
+    const raw = await readFile(PRODUCTS_PATH, "utf-8");
+    const products = JSON.parse(raw);
+    if (products.find((p) => p.id === body.id)) {
+      throw createError({ statusCode: 409, statusMessage: "ID j\xE1 existe" });
+    }
+    products.push(body);
+    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), "utf-8");
+    return { ok: true, product: body };
+  }
+  if (method === "PUT") {
+    const body = await readBody(event);
+    if (!body.id) {
+      throw createError({ statusCode: 400, statusMessage: "id \xE9 obrigat\xF3rio" });
+    }
+    const raw = await readFile(PRODUCTS_PATH, "utf-8");
+    const products = JSON.parse(raw);
+    const idx = products.findIndex((p) => p.id === body.id);
+    if (idx === -1) {
+      throw createError({ statusCode: 404, statusMessage: "Produto n\xE3o encontrado" });
+    }
+    products[idx] = { ...products[idx], ...body };
+    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), "utf-8");
+    return { ok: true, product: products[idx] };
+  }
+  if (method === "DELETE") {
+    const query = getQuery$1(event);
+    const id = query.id;
+    if (!id) {
+      throw createError({ statusCode: 400, statusMessage: "query param id \xE9 obrigat\xF3rio" });
+    }
+    const raw = await readFile(PRODUCTS_PATH, "utf-8");
+    const products = JSON.parse(raw);
+    const filtered = products.filter((p) => p.id !== id);
+    if (filtered.length === products.length) {
+      throw createError({ statusCode: 404, statusMessage: "Produto n\xE3o encontrado" });
+    }
+    await writeFile(PRODUCTS_PATH, JSON.stringify(filtered, null, 2), "utf-8");
+    return { ok: true, removed: id };
+  }
+  throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
+});
+
+const products$4 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: products$3
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg"];
+const MAX_SIZE_BYTES = 5 * 1024 * 1024;
+function checkAuth(event) {
+  var _a;
+  const secret = process.env.ADMIN_SECRET;
+  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!secret || token !== secret) {
+    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+  }
+}
+const upload = defineEventHandler(async (event) => {
+  var _a;
+  checkAuth(event);
+  if (event.method !== "POST") {
+    throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
+  }
+  const parts = await readMultipartFormData(event);
+  if (!parts || parts.length === 0) {
+    throw createError({ statusCode: 400, statusMessage: "Nenhum arquivo enviado" });
+  }
+  const filePart = parts.find((p) => p.name === "file");
+  if (!filePart || !filePart.data || !filePart.filename) {
+    throw createError({ statusCode: 400, statusMessage: 'Campo "file" ausente' });
+  }
+  const mimeType = (_a = filePart.type) != null ? _a : "";
+  if (!ALLOWED_TYPES.includes(mimeType)) {
+    throw createError({ statusCode: 400, statusMessage: "Apenas PNG, JPG e JPEG s\xE3o permitidos" });
+  }
+  if (filePart.data.byteLength > MAX_SIZE_BYTES) {
+    throw createError({ statusCode: 400, statusMessage: "Arquivo muito grande (m\xE1x. 5MB)" });
+  }
+  const ext = extname(filePart.filename).toLowerCase();
+  const safeName = filePart.filename.replace(ext, "").toLowerCase().replace(/[^a-z0-9-_]/g, "-").replace(/-+/g, "-").substring(0, 60);
+  const finalName = `${safeName}${ext}`;
+  const uploadDir = resolve("./public/images/produtos");
+  await mkdir(uploadDir, { recursive: true });
+  const filePath = resolve(uploadDir, finalName);
+  await writeFile(filePath, filePart.data);
+  return {
+    ok: true,
+    url: `/images/produtos/${finalName}`,
+    filename: finalName
+  };
+});
+
+const upload$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: upload
+}, Symbol.toStringTag, { value: 'Module' }));
+
 const products$2 = [
 	{
 		id: "flor-01",
@@ -3111,7 +3254,8 @@ const products$2 = [
 			"/images/produtos/buque-rosas-vermelhas-detail.jpg"
 		],
 		featured: true,
-		installments: "3x de R$ 65,30 sem juros"
+		installments: "3x de R$ 65,30 sem juros",
+		oldPrice: 250
 	},
 	{
 		id: "flor-02",
@@ -3126,7 +3270,7 @@ const products$2 = [
 		images: [
 			"/images/produtos/arranjo-girassois.jpg"
 		],
-		featured: false,
+		featured: true,
 		installments: "3x de R$ 46,66 sem juros"
 	},
 	{
@@ -3198,6 +3342,25 @@ const products$2 = [
 		],
 		featured: false,
 		installments: "3x de R$ 98,33 sem juros"
+	},
+	{
+		id: "bromelia-01",
+		name: "Bomelia",
+		description: "Bromélia Linda",
+		price: 352,
+		oldPrice: 529,
+		category: "buques",
+		categories: [
+			"buques",
+			"presentes",
+			"destaques"
+		],
+		image: "/images/produtos/screenshot-from-2026-07-12-16-18-56.png",
+		images: [
+			"/images/produtos/screenshot-from-2026-07-12-16-18-56.png"
+		],
+		featured: true,
+		installments: "3x de 117.34 Sem Juros"
 	}
 ];
 

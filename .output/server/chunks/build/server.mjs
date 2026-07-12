@@ -1,5 +1,5 @@
 import process from 'node:process';globalThis._importMeta_=globalThis._importMeta_||{url:"file:///_entry.js",env:process.env};import { ref, watch, computed, hasInjectionContext, inject, getCurrentInstance, defineComponent, createElementBlock, shallowRef, provide, cloneVNode, h, isRef, toValue, onServerPrefetch, reactive, Suspense, Fragment, useSSRContext, createApp, shallowReactive, onErrorCaptured, unref, createVNode, resolveDynamicComponent, effectScope, nextTick, toRef, defineAsyncComponent, mergeProps, getCurrentScope, isReadonly, toRaw, isShallow, isReactive } from 'vue';
-import { p as parseURL, e as encodePath, l as decodePath, m as hasProtocol, n as isScriptProtocol, o as joinURL, w as withQuery, s as sanitizeStatusCode, q as getContext, $ as $fetch, r as hash, c as createError$1, t as executeAsync, v as defu } from '../nitro/nitro.mjs';
+import { p as parseURL, e as encodePath, n as decodePath, o as hasProtocol, q as isScriptProtocol, s as joinURL, w as withQuery, t as sanitizeStatusCode, v as getContext, $ as $fetch, x as hash, c as createError$1, y as executeAsync, z as defu } from '../nitro/nitro.mjs';
 import { b as baseURL } from '../routes/renderer.mjs';
 import { defineStore, setActivePinia, createPinia, shouldHydrate } from 'pinia';
 import { RouterView, createMemoryHistory, createRouter, START_LOCATION } from 'vue-router';
@@ -620,14 +620,19 @@ function toArray(value) {
 }
 const _routes = [
   {
+    name: "admin",
+    path: "/admin",
+    component: () => import('./admin-s1eqMRgW.mjs')
+  },
+  {
     name: "checkout",
     path: "/checkout",
-    component: () => import('./checkout-DAmmWk7k.mjs')
+    component: () => import('./checkout-9xJ7Q9-H.mjs')
   },
   {
     name: "index",
     path: "/",
-    component: () => import('./index-BS8cLMbD.mjs')
+    component: () => import('./index-Jw_2ZPrb.mjs')
   }
 ];
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};

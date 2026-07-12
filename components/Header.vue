@@ -44,13 +44,7 @@ const emit = defineEmits(['toggle-cart'])
         >
           {{ cat.name }}
         </button>
-        <button 
-          class="hover:text-white transition-colors cursor-pointer pb-1 border-b-2"
-          :class="route.path === '/checkout' ? 'text-white border-white' : 'text-almond/75 border-transparent'"
-          @click="router.push('/checkout')"
-        >
-          Checkout
-        </button>
+
       </nav>
       
       <!-- Cart Icon -->
