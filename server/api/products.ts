@@ -1,18 +1,21 @@
-import { useSupabase } from '~/server/utils/supabase'
+import { useDB } from '~/server/utils/cloudflare'
 
-export default defineEventHandler(async () => {
-  const client = useSupabase()
-  const { data, error } = await client
-    .from('products')
-    .select('*')
-    .order('created_at', { ascending: false })
+export default defineEventHandler(async (event) => {
+  const db = useDB(event)
+  try {
+    const { results } = await db.prepare('SELECT * FROM products ORDER BY created_at DESC').all()
 
-  if (error) {
+    return (results || []).map((row: any) => ({
+      ...row,
+      featured: row.featured === 1,
+      categories: JSON.parse(row.categories || '[]'),
+      images: JSON.parse(row.images || '[]')
+    }))
+  } catch (e: any) {
     throw createError({
       statusCode: 500,
-      statusMessage: `Erro ao buscar produtos no Supabase: ${error.message}`
+      statusMessage: `Erro ao buscar produtos no Cloudflare D1: ${e.message}`
     })
   }
-
-  return data
 })
+

@@ -7,8 +7,6 @@ import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@vue+shared@3.5.39/node_modules/@vue/shared/dist/shared.cjs.js';
 import viteNodeEntry_mjs from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs';
 import { viteNodeFetch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
-import { readFile, mkdir, writeFile } from 'node:fs/promises';
-import { createClient } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@supabase+supabase-js@2.110.2/node_modules/@supabase/supabase-js/dist/index.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/vue-bundle-renderer@2.3.1/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/destr@2.0.5/node_modules/destr/dist/index.mjs';
@@ -25,6 +23,7 @@ import defu, { defuFn } from 'file:///home/franco/Documents/front/rosas-presente
 import { snakeCase } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/scule@1.3.0/node_modules/scule/dist/index.mjs';
 import { getContext } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/unctx@2.5.0/node_modules/unctx/dist/index.mjs';
 import { toRouteMatcher, createRouter } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/radix3@1.1.2/node_modules/radix3/dist/index.mjs';
+import { readFile } from 'node:fs/promises';
 import consola, { consola as consola$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/consola@3.4.2/node_modules/consola/dist/index.mjs';
 import { ErrorParser } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/youch-core@0.3.3/node_modules/youch-core/build/index.js';
 import { Youch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/youch@4.1.1/node_modules/youch/build/index.js';
@@ -2735,17 +2734,23 @@ async function getIslandContext(event) {
 	};
 }
 
+const _lazy_MIgyuU = () => Promise.resolve().then(function () { return categories$3; });
+const _lazy_jGb7Bx = () => Promise.resolve().then(function () { return upload$3; });
 const _lazy_1kIxy2 = () => Promise.resolve().then(function () { return login$1; });
 const _lazy_q_X5hY = () => Promise.resolve().then(function () { return products$3; });
 const _lazy_CC5GiG = () => Promise.resolve().then(function () { return upload$1; });
+const _lazy_wBlcem = () => Promise.resolve().then(function () { return categories$1; });
 const _lazy_7F7IFC = () => Promise.resolve().then(function () { return products$1; });
 const _lazy_XZrLxo = () => Promise.resolve().then(function () { return renderer; });
 
 const handlers = [
   { route: '', handler: _shEerr, lazy: false, middleware: true, method: undefined },
+  { route: '/api/admin/categories', handler: _lazy_MIgyuU, lazy: true, middleware: false, method: undefined },
+  { route: '/api/admin/categories/upload', handler: _lazy_jGb7Bx, lazy: true, middleware: false, method: undefined },
   { route: '/api/admin/login', handler: _lazy_1kIxy2, lazy: true, middleware: false, method: undefined },
   { route: '/api/admin/products', handler: _lazy_q_X5hY, lazy: true, middleware: false, method: undefined },
   { route: '/api/admin/upload', handler: _lazy_CC5GiG, lazy: true, middleware: false, method: undefined },
+  { route: '/api/categories', handler: _lazy_wBlcem, lazy: true, middleware: false, method: undefined },
   { route: '/api/products', handler: _lazy_7F7IFC, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_error', handler: _lazy_XZrLxo, lazy: true, middleware: false, method: undefined },
   { route: '/__nuxt_island/**', handler: handler$1, lazy: false, middleware: false, method: undefined },
@@ -3101,6 +3106,137 @@ const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: styles
 }, Symbol.toStringTag, { value: 'Module' }));
 
+const useDB = (event) => {
+  var _a, _b;
+  const db = (_b = (_a = event.context.cloudflare) == null ? void 0 : _a.env) == null ? void 0 : _b.DB;
+  if (!db) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Cloudflare D1 Database binding "DB" n\xE3o encontrada. Verifique se a vari\xE1vel/binding est\xE1 ativa no painel da Cloudflare ou executando via Wrangler.'
+    });
+  }
+  return db;
+};
+const useBucket = (event) => {
+  var _a, _b;
+  const bucket = (_b = (_a = event.context.cloudflare) == null ? void 0 : _a.env) == null ? void 0 : _b.BUCKET;
+  if (!bucket) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Cloudflare R2 Bucket binding "BUCKET" n\xE3o encontrada. Verifique se o bucket est\xE1 configurado no wrangler.toml.'
+    });
+  }
+  return bucket;
+};
+
+function checkAuth$3(event) {
+  var _a;
+  const secret = process.env.ADMIN_SECRET;
+  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!secret || token !== secret) {
+    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+  }
+}
+const categories$2 = defineEventHandler(async (event) => {
+  checkAuth$3(event);
+  if (event.method !== "PUT") {
+    throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
+  }
+  const body = await readBody(event);
+  if (!body.id || !body.name || !body.image) {
+    throw createError({ statusCode: 400, statusMessage: "id, name e image s\xE3o obrigat\xF3rios" });
+  }
+  const db = useDB(event);
+  try {
+    await db.prepare("UPDATE categories SET name = ?, image = ? WHERE id = ?").bind(body.name, body.image, body.id).run();
+    return { ok: true };
+  } catch (e) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Erro ao atualizar categoria no Cloudflare D1: ${e.message}`
+    });
+  }
+});
+
+const categories$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: categories$2
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const ALLOWED_TYPES$1 = ["image/png", "image/jpeg", "image/jpg"];
+const MAX_SIZE_BYTES$1 = 5 * 1024 * 1024;
+function checkAuth$2(event) {
+  var _a;
+  const secret = process.env.ADMIN_SECRET;
+  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const token = auth.replace("Bearer ", "").trim();
+  if (!secret || token !== secret) {
+    throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
+  }
+}
+const upload$2 = defineEventHandler(async (event) => {
+  var _a;
+  checkAuth$2(event);
+  if (event.method !== "POST") {
+    throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
+  }
+  const parts = await readMultipartFormData(event);
+  if (!parts || parts.length === 0) {
+    throw createError({ statusCode: 400, statusMessage: "Nenhum arquivo enviado" });
+  }
+  const filePart = parts.find((p) => p.name === "file");
+  const categoryNamePart = parts.find((p) => p.name === "categoryName");
+  const oldImageUrlPart = parts.find((p) => p.name === "oldImageUrl");
+  if (!filePart || !filePart.data || !filePart.filename) {
+    throw createError({ statusCode: 400, statusMessage: 'Campo "file" ausente' });
+  }
+  if (!categoryNamePart || !categoryNamePart.data) {
+    throw createError({ statusCode: 400, statusMessage: 'Campo "categoryName" ausente' });
+  }
+  const categoryName = categoryNamePart.data.toString("utf-8");
+  const oldImageUrl = oldImageUrlPart ? oldImageUrlPart.data.toString("utf-8") : "";
+  const mimeType = (_a = filePart.type) != null ? _a : "";
+  if (!ALLOWED_TYPES$1.includes(mimeType)) {
+    throw createError({ statusCode: 400, statusMessage: "Apenas PNG, JPG e JPEG s\xE3o permitidos" });
+  }
+  if (filePart.data.byteLength > MAX_SIZE_BYTES$1) {
+    throw createError({ statusCode: 400, statusMessage: "Arquivo muito grande (m\xE1x. 5MB)" });
+  }
+  const bucket = useBucket(event);
+  const r2PublicUrl = process.env.R2_PUBLIC_URL || "https://sua-url-r2-publica.dev";
+  try {
+    if (oldImageUrl && oldImageUrl.includes(r2PublicUrl)) {
+      const relativePath = oldImageUrl.split(`${r2PublicUrl}/`)[1];
+      if (relativePath) {
+        await bucket.delete(relativePath);
+      }
+    }
+    const ext = extname(filePart.filename).toLowerCase();
+    const sanitizedCategory = categoryName.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9-_]/g, "-").replace(/-+/g, "-");
+    const finalName = `categoria-${sanitizedCategory}-${Date.now()}${ext}`;
+    const storagePath = `categorias/${finalName}`;
+    await bucket.put(storagePath, filePart.data, {
+      httpMetadata: { contentType: mimeType }
+    });
+    const publicUrl = `${r2PublicUrl}/${storagePath}`;
+    return {
+      ok: true,
+      url: publicUrl
+    };
+  } catch (e) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Erro ao fazer upload da imagem no R2: ${e.message}`
+    });
+  }
+});
+
+const upload$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: upload$2
+}, Symbol.toStringTag, { value: 'Module' }));
+
 const login = defineEventHandler(async (event) => {
   if (event.method !== "POST") {
     throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
@@ -3118,15 +3254,6 @@ const login$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: login
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const useSupabase = () => {
-  const url = process.env.SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
-  if (!url || !key) {
-    throw new Error("Supabase URL ou Key est\xE1 faltando nas vari\xE1veis de ambiente (.env)");
-  }
-  return createClient(url, key);
-};
-
 function checkAuth$1(event) {
   var _a;
   const secret = process.env.ADMIN_SECRET;
@@ -3139,42 +3266,84 @@ function checkAuth$1(event) {
 const products$2 = defineEventHandler(async (event) => {
   checkAuth$1(event);
   const method = event.method;
-  const client = useSupabase();
+  const db = useDB(event);
   if (method === "GET") {
-    const { data, error } = await client.from("products").select("*").order("created_at", { ascending: false });
-    if (error) {
-      throw createError({ statusCode: 500, statusMessage: `Erro ao buscar produtos: ${error.message}` });
+    try {
+      const { results } = await db.prepare("SELECT * FROM products ORDER BY created_at DESC").all();
+      return (results || []).map((row) => ({
+        ...row,
+        featured: row.featured === 1,
+        categories: JSON.parse(row.categories || "[]"),
+        images: JSON.parse(row.images || "[]")
+      }));
+    } catch (e) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao buscar produtos: ${e.message}` });
     }
-    return data;
   }
   if (method === "POST") {
     const body = await readBody(event);
     if (!body.id || !body.name || !body.price) {
       throw createError({ statusCode: 400, statusMessage: "id, name e price s\xE3o obrigat\xF3rios" });
     }
-    const { data: existing, error: checkError } = await client.from("products").select("id").eq("id", body.id).maybeSingle();
-    if (checkError) {
-      throw createError({ statusCode: 500, statusMessage: `Erro ao validar ID: ${checkError.message}` });
+    try {
+      const existing = await db.prepare("SELECT id FROM products WHERE id = ?").bind(body.id).first();
+      if (existing) {
+        throw createError({ statusCode: 409, statusMessage: "ID j\xE1 existe" });
+      }
+      const categoriesStr = JSON.stringify(body.categories || []);
+      const imagesStr = JSON.stringify(body.images || []);
+      const featuredVal = body.featured ? 1 : 0;
+      await db.prepare(
+        "INSERT INTO products (id, name, description, price, oldPrice, category, categories, image, images, featured, installments) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+      ).bind(
+        body.id,
+        body.name,
+        body.description || null,
+        Number(body.price),
+        body.oldPrice ? Number(body.oldPrice) : null,
+        body.category,
+        categoriesStr,
+        body.image || null,
+        imagesStr,
+        featuredVal,
+        body.installments || null
+      ).run();
+      return { ok: true, product: body };
+    } catch (e) {
+      throw createError({
+        statusCode: e.statusCode || 500,
+        statusMessage: e.statusMessage || `Erro ao criar produto no D1: ${e.message}`
+      });
     }
-    if (existing) {
-      throw createError({ statusCode: 409, statusMessage: "ID j\xE1 existe" });
-    }
-    const { error: insertError } = await client.from("products").insert([body]);
-    if (insertError) {
-      throw createError({ statusCode: 500, statusMessage: `Erro ao criar produto: ${insertError.message}` });
-    }
-    return { ok: true, product: body };
   }
   if (method === "PUT") {
     const body = await readBody(event);
     if (!body.id) {
       throw createError({ statusCode: 400, statusMessage: "id \xE9 obrigat\xF3rio" });
     }
-    const { error: updateError } = await client.from("products").update(body).eq("id", body.id);
-    if (updateError) {
-      throw createError({ statusCode: 500, statusMessage: `Erro ao atualizar produto: ${updateError.message}` });
+    try {
+      const categoriesStr = JSON.stringify(body.categories || []);
+      const imagesStr = JSON.stringify(body.images || []);
+      const featuredVal = body.featured ? 1 : 0;
+      await db.prepare(
+        "UPDATE products SET name = ?, description = ?, price = ?, oldPrice = ?, category = ?, categories = ?, image = ?, images = ?, featured = ?, installments = ? WHERE id = ?"
+      ).bind(
+        body.name,
+        body.description || null,
+        Number(body.price),
+        body.oldPrice ? Number(body.oldPrice) : null,
+        body.category,
+        categoriesStr,
+        body.image || null,
+        imagesStr,
+        featuredVal,
+        body.installments || null,
+        body.id
+      ).run();
+      return { ok: true, product: body };
+    } catch (e) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao atualizar produto no D1: ${e.message}` });
     }
-    return { ok: true, product: body };
   }
   if (method === "DELETE") {
     const query = getQuery$1(event);
@@ -3182,11 +3351,12 @@ const products$2 = defineEventHandler(async (event) => {
     if (!id) {
       throw createError({ statusCode: 400, statusMessage: "query param id \xE9 obrigat\xF3rio" });
     }
-    const { error: deleteError } = await client.from("products").delete().eq("id", id);
-    if (deleteError) {
-      throw createError({ statusCode: 500, statusMessage: `Erro ao remover produto: ${deleteError.message}` });
+    try {
+      await db.prepare("DELETE FROM products WHERE id = ?").bind(id).run();
+      return { ok: true, removed: id };
+    } catch (e) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao remover produto no D1: ${e.message}` });
     }
-    return { ok: true, removed: id };
   }
   throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
 });
@@ -3213,6 +3383,11 @@ const upload = defineEventHandler(async (event) => {
   if (event.method !== "POST") {
     throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
   }
+  const query = getQuery$1(event);
+  const folder = query.folder || "produtos";
+  if (folder !== "produtos" && folder !== "categorias") {
+    throw createError({ statusCode: 400, statusMessage: 'Pasta inv\xE1lida. Use "produtos" ou "categorias"' });
+  }
   const parts = await readMultipartFormData(event);
   if (!parts || parts.length === 0) {
     throw createError({ statusCode: 400, statusMessage: "Nenhum arquivo enviado" });
@@ -3230,16 +3405,26 @@ const upload = defineEventHandler(async (event) => {
   }
   const ext = extname(filePart.filename).toLowerCase();
   const safeName = filePart.filename.replace(ext, "").toLowerCase().replace(/[^a-z0-9-_]/g, "-").replace(/-+/g, "-").substring(0, 60);
-  const finalName = `${safeName}${ext}`;
-  const uploadDir = resolve("./public/images/produtos");
-  await mkdir(uploadDir, { recursive: true });
-  const filePath = resolve(uploadDir, finalName);
-  await writeFile(filePath, filePart.data);
-  return {
-    ok: true,
-    url: `/images/produtos/${finalName}`,
-    filename: finalName
-  };
+  const finalName = `${safeName}-${Date.now()}${ext}`;
+  const storagePath = `${folder}/${finalName}`;
+  const bucket = useBucket(event);
+  try {
+    await bucket.put(storagePath, filePart.data, {
+      httpMetadata: { contentType: mimeType }
+    });
+    const r2PublicUrl = process.env.R2_PUBLIC_URL || "https://sua-url-r2-publica.dev";
+    const publicUrl = `${r2PublicUrl}/${storagePath}`;
+    return {
+      ok: true,
+      url: publicUrl,
+      filename: finalName
+    };
+  } catch (e) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Erro ao fazer upload no Cloudflare R2: ${e.message}`
+    });
+  }
 });
 
 const upload$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
@@ -3247,16 +3432,43 @@ const upload$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: upload
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const products = defineEventHandler(async () => {
-  const client = useSupabase();
-  const { data, error } = await client.from("products").select("*").order("created_at", { ascending: false });
-  if (error) {
+const categories = defineEventHandler(async (event) => {
+  try {
+    const db = useDB(event);
+    const { results } = await db.prepare("SELECT * FROM categories ORDER BY id ASC").all();
+    return results || [];
+  } catch (e) {
+    return [
+      { id: "todos", name: "Todos", image: "/images/categorias/categoria-todos.jpg" },
+      { id: "destaques", name: "Destaques", image: "/images/categorias/categoria-todos.jpg" },
+      { id: "buques", name: "Buqu\xEAs", image: "/images/categorias/categoria-buques.jpg" },
+      { id: "cestas", name: "Cestas", image: "/images/categorias/categoria-cestas.jpg" },
+      { id: "presentes", name: "Presentes", image: "/images/categorias/categoria-presentes.jpg" }
+    ];
+  }
+});
+
+const categories$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+  __proto__: null,
+  default: categories
+}, Symbol.toStringTag, { value: 'Module' }));
+
+const products = defineEventHandler(async (event) => {
+  const db = useDB(event);
+  try {
+    const { results } = await db.prepare("SELECT * FROM products ORDER BY created_at DESC").all();
+    return (results || []).map((row) => ({
+      ...row,
+      featured: row.featured === 1,
+      categories: JSON.parse(row.categories || "[]"),
+      images: JSON.parse(row.images || "[]")
+    }));
+  } catch (e) {
     throw createError({
       statusCode: 500,
-      statusMessage: `Erro ao buscar produtos no Supabase: ${error.message}`
+      statusMessage: `Erro ao buscar produtos no Cloudflare D1: ${e.message}`
     });
   }
-  return data;
 });
 
 const products$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
@@ -3509,4 +3721,3 @@ const renderer = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: handler
 }, Symbol.toStringTag, { value: 'Module' }));
-//# sourceMappingURL=index.mjs.map

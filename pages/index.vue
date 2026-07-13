@@ -18,6 +18,24 @@ const selectedProduct = ref<Product | null>(null)
 const activeImageIndex = ref<number>(0)
 const isCartOpen = ref<boolean>(false)
 
+// Paginação
+const currentPage = ref(1)
+const itemsPerPage = 12
+const totalPages = computed(() => Math.ceil(filteredProducts.value.length / itemsPerPage))
+
+const paginatedProducts = computed(() => {
+  const start = (currentPage.value - 1) * itemsPerPage
+  const end = start + itemsPerPage
+  return filteredProducts.value.slice(start, end)
+})
+
+function changePage(page: number) {
+  if (page < 1 || page > totalPages.value) return
+  currentPage.value = page
+  // Rola a tela de volta para o topo da lista de produtos suavemente
+  window.scrollTo({ top: 380, behavior: 'smooth' })
+}
+
 // Carousel Auto Scroll Timer
 let carouselTimer: any = null
 
@@ -44,18 +62,14 @@ watch(
     } else {
       selectedCategory.value = 'todos'
     }
+    currentPage.value = 1 // Reseta para a primeira página ao trocar de categoria
   },
   { immediate: true },
 )
 
-// Categories with background images
-const categories = [
-  { id: 'todos', name: 'Todos', image: '/images/categorias/categoria-todos.jpg' },
-  { id: 'destaques', name: 'Destaques', image: '/images/categorias/categoria-todos.jpg' },
-  { id: 'buques', name: 'Buquês', image: '/images/categorias/categoria-buques.jpg' },
-  { id: 'cestas', name: 'Cestas', image: '/images/categorias/categoria-cestas.jpg' },
-  { id: 'presentes', name: 'Presentes', image: '/images/categorias/categoria-presentes.jpg' },
-]
+const { data: apiCategories } = await useFetch<any[]>('/api/categories')
+const categories = ref<any[]>(apiCategories.value || [])
+
 
 // Navigation / Methods
 function nextSlide() {
@@ -255,6 +269,8 @@ onUnmounted(() => {
             :src="getFirstImage(product)"
             :alt="product.name"
             class="absolute inset-0 w-full h-full object-cover"
+            :loading="index === 0 ? 'eager' : 'lazy'"
+            :fetchpriority="index === 0 ? 'high' : 'auto'"
           />
 
           <div class="absolute inset-0 z-20 flex items-end pb-9 pt-6 px-6 md:p-12 text-white">
@@ -354,6 +370,7 @@ onUnmounted(() => {
               :src="cat.image"
               :alt="cat.name"
               class="absolute inset-0 w-full h-full object-cover transition-transform duration-500 hover:scale-105 pointer-events-none"
+              loading="lazy"
             />
             <!-- Dark Overlay with Bold Text -->
             <div
@@ -382,7 +399,7 @@ onUnmounted(() => {
 
         <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           <div
-            v-for="product in filteredProducts"
+            v-for="product in paginatedProducts"
             :key="product.id"
             class="product-card-glass group cursor-pointer"
             @click="openProductDetail(product)"
@@ -451,6 +468,35 @@ onUnmounted(() => {
               </div>
             </div>
           </div>
+        </div>
+
+        <!-- Controles de Paginação -->
+        <div v-if="totalPages > 1" class="flex justify-center items-center gap-1.5 mt-8 py-4">
+          <button
+            class="px-3 py-1.5 rounded-xl border border-burgundy/10 text-burgundy font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 transition-all cursor-pointer"
+            :disabled="currentPage === 1"
+            @click="changePage(currentPage - 1)"
+          >
+            Anterior
+          </button>
+          
+          <button
+            v-for="page in totalPages"
+            :key="page"
+            class="w-9 h-9 rounded-xl border text-xs font-bold transition-all cursor-pointer"
+            :class="currentPage === page ? 'bg-burgundy text-white border-burgundy shadow-md' : 'border-burgundy/10 text-burgundy hover:bg-neutral-100'"
+            @click="changePage(page)"
+          >
+            {{ page }}
+          </button>
+
+          <button
+            class="px-3 py-1.5 rounded-xl border border-burgundy/10 text-burgundy font-semibold text-xs disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 transition-all cursor-pointer"
+            :disabled="currentPage === totalPages"
+            @click="changePage(currentPage + 1)"
+          >
+            Próxima
+          </button>
         </div>
       </section>
     </main>

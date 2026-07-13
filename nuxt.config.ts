@@ -6,12 +6,14 @@ export default defineNuxtConfig({
   css: ['~/assets/styles/main.css'],
 
   vite: {
-    plugins: [
-      tailwindcss()
-    ]
+    plugins: [tailwindcss()],
+  },
+
+  nitro: {
+    preset: 'cloudflare-pages',
   },
 
   telemetry: false,
 
-  compatibilityDate: '2026-07-12'
+  compatibilityDate: '2026-07-12',
 })

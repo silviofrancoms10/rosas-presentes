@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const token = ref('')
@@ -18,6 +18,7 @@ async function login() {
     token.value = res.token
     localStorage.setItem('admin_token', res.token)
     await loadProducts()
+    await loadCategories()
   } catch {
     loginError.value = 'Senha incorreta. Tente novamente.'
   } finally {
@@ -29,6 +30,7 @@ function logout() {
   token.value = ''
   localStorage.removeItem('admin_token')
   products.value = []
+  categories.value = []
 }
 
 onMounted(() => {
@@ -36,8 +38,10 @@ onMounted(() => {
   if (saved) {
     token.value = saved
     loadProducts()
+    loadCategories()
   }
 })
+
 
 // ── Products ──────────────────────────────────────────────────────────────────
 const products = ref<any[]>([])
@@ -46,12 +50,36 @@ const saveError = ref('')
 
 const categoryOptions = ['buques', 'cestas', 'presentes', 'destaques']
 
+function parsePrice(val: any): number {
+  if (val === undefined || val === null || val === '') return 0
+  const str = String(val).trim()
+  const normalized = str.replace(',', '.')
+  const num = Number(normalized)
+  return isNaN(num) ? 0 : num
+}
+
+function parseOptionalPrice(val: any): number | null {
+  if (val === undefined || val === null || val === '') return null
+  const str = String(val).trim()
+  const normalized = str.replace(',', '.')
+  const num = Number(normalized)
+  return isNaN(num) ? null : num
+}
+
+function detectInstallmentOption(installments: string | null | undefined): string {
+  if (!installments) return ''
+  const trimmed = installments.trim()
+  if (trimmed.startsWith('2x de R$') && trimmed.endsWith('sem juros')) return '2'
+  if (trimmed.startsWith('3x de R$') && trimmed.endsWith('sem juros')) return '3'
+  return 'custom'
+}
+
 const emptyForm = () => ({
   id: '',
   name: '',
   description: '',
-  price: 0,
-  oldPrice: null as number | null,
+  price: '' as string | number,
+  oldPrice: '' as string | number | null,
   category: 'buques',
   categories: ['buques'] as string[],
   image: '',
@@ -61,11 +89,102 @@ const emptyForm = () => ({
 })
 
 const form = ref(emptyForm())
+const installmentOption = ref('')
 const editingId = ref<string | null>(null)
 const showForm = ref(false)
-const tab = ref<'products' | 'guide'>('products')
+const tab = ref<'products' | 'categories' | 'guide'>('products')
 const deleteConfirmId = ref<string | null>(null)
 const successMsg = ref('')
+
+// ── Categories State & Logic ──────────────────────────────────────────────────
+const categories = ref<any[]>([])
+const isCategoriesLoading = ref(false)
+const categoryForm = ref({
+  id: '',
+  name: '',
+  image: ''
+})
+const showCategoryForm = ref(false)
+const isUploadingCategory = ref(false)
+const categoryUploadError = ref('')
+
+async function loadCategories() {
+  isCategoriesLoading.value = true
+  try {
+    categories.value = await $fetch<any[]>('/api/categories')
+  } catch (e: any) {
+    console.error('Erro ao carregar categorias', e)
+  } finally {
+    isCategoriesLoading.value = false
+  }
+}
+
+function openEditCategory(cat: any) {
+  categoryForm.value = {
+    id: cat.id,
+    name: cat.name,
+    image: cat.image
+  }
+  categoryUploadError.value = ''
+  showCategoryForm.value = true
+}
+
+async function uploadCategoryImg(file: File) {
+  categoryUploadError.value = ''
+  const allowed = ['image/png', 'image/jpeg', 'image/jpg']
+  if (!allowed.includes(file.type)) {
+    categoryUploadError.value = 'Apenas PNG, JPG e JPEG são permitidos.'
+    return
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    categoryUploadError.value = 'Arquivo muito grande (máx. 5MB).'
+    return
+  }
+  isUploadingCategory.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', file)
+    fd.append('categoryName', categoryForm.value.name)
+    fd.append('oldImageUrl', categoryForm.value.image)
+
+    const res = await $fetch<{ url: string }>('/api/admin/categories/upload', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token.value}` },
+      body: fd,
+    })
+    categoryForm.value.image = res.url
+  } catch (e: any) {
+    categoryUploadError.value = e.data?.statusMessage ?? 'Erro ao enviar imagem da categoria.'
+  } finally {
+    isUploadingCategory.value = false
+  }
+}
+
+async function onCategoryFileChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input.files && input.files[0]) {
+    const file = await compressImage(input.files[0])
+    uploadCategoryImg(file)
+  }
+}
+
+async function saveCategory() {
+  categoryUploadError.value = ''
+  try {
+    await $fetch('/api/admin/categories', {
+      method: 'PUT',
+      headers: { Authorization: `Bearer ${token.value}` },
+      body: categoryForm.value
+    })
+    showCategoryForm.value = false
+    successMsg.value = 'Categoria atualizada com sucesso!'
+    await loadCategories()
+    setTimeout(() => { successMsg.value = '' }, 3500)
+  } catch (e: any) {
+    categoryUploadError.value = e.data?.statusMessage ?? 'Erro ao salvar categoria.'
+  }
+}
+
 
 function authHeaders() {
   return { Authorization: `Bearer ${token.value}` }
@@ -84,6 +203,7 @@ async function loadProducts() {
 
 function openCreate() {
   form.value = emptyForm()
+  installmentOption.value = ''
   editingId.value = null
   showForm.value = true
   saveError.value = ''
@@ -96,10 +216,25 @@ function openEdit(p: any) {
     images: [...(p.images ?? [])],
     categories: [...(p.categories ?? [p.category])],
   }
+  installmentOption.value = detectInstallmentOption(p.installments)
   editingId.value = p.id
   showForm.value = true
   saveError.value = ''
 }
+
+watch([() => form.value.price, installmentOption], () => {
+  if (installmentOption.value === '') {
+    form.value.installments = ''
+  } else if (installmentOption.value === '2') {
+    const numericPrice = parsePrice(form.value.price)
+    const val = numericPrice / 2
+    form.value.installments = `2x de R$ ${val.toFixed(2).replace('.', ',')} sem juros`
+  } else if (installmentOption.value === '3') {
+    const numericPrice = parsePrice(form.value.price)
+    const val = numericPrice / 3
+    form.value.installments = `3x de R$ ${val.toFixed(2).replace('.', ',')} sem juros`
+  }
+})
 
 function cancelForm() {
   showForm.value = false
@@ -124,6 +259,64 @@ function removeImageUrl(idx: number) {
 }
 function updateImageUrl(idx: number, val: string) {
   form.value.images[idx] = val
+}
+
+// Helper para compressão de imagens via Canvas no cliente (Alvo: ~1MB)
+function compressImage(file: File, maxWidth = 2560, quality = 0.9): Promise<File> {
+  return new Promise((resolve) => {
+    // Se o arquivo original já for menor que 1.1MB, envia ele direto para manter 100% da qualidade
+    if (file.size <= 1.1 * 1024 * 1024) {
+      resolve(file)
+      return
+    }
+
+    const reader = new FileReader()
+    reader.readAsDataURL(file)
+    reader.onload = (event) => {
+      const img = new Image()
+      img.src = event.target?.result as string
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        let width = img.width
+        let height = img.height
+
+        // Redimensiona se for maior que a largura máxima (2K) mantendo a proporção
+        if (width > maxWidth) {
+          height = Math.round((height * maxWidth) / width)
+          width = maxWidth
+        }
+
+        canvas.width = width
+        canvas.height = height
+
+        const ctx = canvas.getContext('2d')
+        if (!ctx) {
+          resolve(file)
+          return
+        }
+
+        ctx.drawImage(img, 0, 0, width, height)
+
+        canvas.toBlob(
+          (blob) => {
+            if (blob) {
+              const compressedFile = new File([blob], file.name.replace(/\.[^/.]+$/, "") + ".jpg", {
+                type: 'image/jpeg',
+                lastModified: Date.now()
+              })
+              resolve(compressedFile)
+            } else {
+              resolve(file)
+            }
+          },
+          'image/jpeg',
+          quality
+        )
+      }
+      img.onerror = () => resolve(file)
+    }
+    reader.onerror = () => resolve(file)
+  })
 }
 
 // ── Upload ────────────────────────────────────────────────────────────────────
@@ -158,19 +351,28 @@ async function uploadImage(idx: number, file: File) {
   }
 }
 
-function onFileChange(idx: number, event: Event) {
+async function onFileChange(idx: number, event: Event) {
   const input = event.target as HTMLInputElement
   if (input.files && input.files[0]) {
-    uploadImage(idx, input.files[0])
+    const file = await compressImage(input.files[0])
+    uploadImage(idx, file)
   }
 }
 
 async function saveProduct() {
   saveError.value = ''
+  
+  const parsedP = parsePrice(form.value.price)
+  const parsedOldP = parseOptionalPrice(form.value.oldPrice)
+
+  // Atualiza no formulário para refletir com ponto (.) na interface
+  form.value.price = parsedP
+  form.value.oldPrice = parsedOldP
+
   const payload = {
     ...form.value,
-    price: Number(form.value.price),
-    oldPrice: form.value.oldPrice ? Number(form.value.oldPrice) : undefined,
+    price: parsedP,
+    oldPrice: parsedOldP !== null ? parsedOldP : undefined,
     image: form.value.images[0] ?? form.value.image,
     images: form.value.images.filter(Boolean),
   }
@@ -303,6 +505,11 @@ function formatPrice(v: number) {
             class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
           >Produtos</button>
           <button
+            @click="tab = 'categories'"
+            :class="tab === 'categories' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+          >Categorias</button>
+          <button
             @click="tab = 'guide'"
             :class="tab === 'guide' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
             class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
@@ -391,33 +598,79 @@ function formatPrice(v: number) {
           </div>
         </div>
 
+        <!-- ── Categories Tab ─────────────────────────── -->
+        <div v-if="tab === 'categories'">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-extrabold text-lg text-neutral-800">Categorias da Loja</h2>
+          </div>
+
+          <div v-if="isCategoriesLoading" class="text-center py-16 text-neutral-400">Carregando categorias...</div>
+          <div v-else class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div
+              v-for="cat in categories"
+              :key="cat.id"
+              class="bg-white rounded-2xl border border-neutral-200 p-4 flex items-center space-x-4 shadow-sm hover:shadow-md transition-shadow"
+            >
+              <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-neutral-100 flex-shrink-0 border border-neutral-200">
+                <img :src="cat.image" :alt="cat.name" class="w-full h-full object-cover" />
+              </div>
+              <div class="flex-grow min-w-0">
+                <div class="flex items-center space-x-2">
+                  <h3 class="font-bold text-neutral-800 text-sm truncate">{{ cat.name }}</h3>
+                </div>
+                <p class="text-[11px] text-neutral-400 font-mono mt-0.5">ID: {{ cat.id }}</p>
+              </div>
+              <div class="flex-shrink-0">
+                <button
+                  @click="openEditCategory(cat)"
+                  class="bg-burgundy text-white text-xs font-semibold px-3.5 py-2 rounded-xl hover:bg-[#920000] transition-colors flex items-center space-x-1 shadow-sm cursor-pointer"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  </svg>
+                  <span>Editar</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- ── Guide Tab ─────────────────────────────── -->
         <div v-if="tab === 'guide'" class="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6 shadow-sm mb-8">
           <h2 class="font-extrabold text-lg text-burgundy border-b border-burgundy/10 pb-3">Como usar o Painel Admin</h2>
-          <div class="space-y-4 text-sm text-neutral-700 leading-relaxed">
+          <div class="space-y-6 text-sm text-neutral-700 leading-relaxed">
             <div>
-              <h3 class="font-bold text-neutral-800 mb-1">📦 Adicionar Produto</h3>
-              <p>Clique em <strong>"Novo Produto"</strong>. Preencha todos os campos. O <strong>ID</strong> deve ser único (ex: <code class="bg-neutral-100 px-1.5 py-0.5 rounded-md font-mono text-xs">buque-03</code>). As imagens são URLs do caminho da imagem no servidor (ex: <code class="bg-neutral-100 px-1.5 py-0.5 rounded-md font-mono text-xs">/images/produtos/minha-foto.jpg</code>).</p>
+              <h3 class="font-bold text-neutral-800 mb-1">📦 Gerenciamento de Produtos</h3>
+              <p class="mb-2">Você pode listar, adicionar, editar e excluir produtos do catálogo. Os dados são armazenados diretamente no banco de dados <strong>Cloudflare D1</strong>.</p>
+              <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li><strong>Novo Produto:</strong> Clique em "Novo Produto", insira um ID único (ex: <code class="bg-neutral-100 px-1 py-0.5 rounded font-mono">buque-rosas-premium</code>) que não poderá ser alterado depois.</li>
+                <li><strong>Preços:</strong> Preencha o preço atual e, opcionalmente, o preço antigo (para exibir descontos e valor riscado).</li>
+                <li><strong>Banners (Destaques):</strong> Ative a opção "Destaque (Banner)" para exibir o produto no carrossel rotativo da página inicial.</li>
+                <li><strong>Associação de Categorias:</strong> Vincule o produto a uma ou mais categorias no formulário.</li>
+              </ul>
             </div>
             <div>
-              <h3 class="font-bold text-neutral-800 mb-1">✏️ Editar Produto</h3>
-              <p>Clique no ícone de <strong>lápis</strong> ao lado do produto. Todos os dados são preenchidos automaticamente para edição. Salve quando finalizar.</p>
+              <h3 class="font-bold text-neutral-800 mb-1">🏷️ Edição de Categorias</h3>
+              <p>Na aba <strong>Categorias</strong>, você pode atualizar o nome de exibição e a imagem de capa de cada categoria cadastrada. Quando você altera a imagem de uma categoria, o sistema remove automaticamente a imagem antiga do Cloudflare R2 para liberar espaço.</p>
             </div>
             <div>
-              <h3 class="font-bold text-neutral-800 mb-1">🗑️ Remover Produto</h3>
-              <p>Clique no ícone de <strong>lixeira</strong> ao lado do produto. Uma confirmação será solicitada antes de excluir permanentemente.</p>
-            </div>
-            <div>
-              <h3 class="font-bold text-neutral-800 mb-1">🖼️ Controlar Banners (Destaques)</h3>
-              <p>Os banners do carrossel da página inicial são os produtos com <strong>"Destaque (Banner)"</strong> marcado. Para adicionar um produto ao banner, edite-o e ative essa opção. Para remover do banner, desative a opção.</p>
-            </div>
-            <div>
-              <h3 class="font-bold text-neutral-800 mb-1">🖼️ Adicionar Imagens</h3>
-              <p>Coloque os arquivos de imagem na pasta <code class="bg-neutral-100 px-1.5 py-0.5 rounded-md font-mono text-xs">public/images/produtos/</code> do projeto. Depois insira o caminho no campo de imagem (ex: <code class="bg-neutral-100 px-1.5 py-0.5 rounded-md font-mono text-xs">/images/produtos/nome-do-arquivo.jpg</code>).</p>
+              <h3 class="font-bold text-neutral-800 mb-1">🖼️ Upload de Imagens (Cloudflare R2)</h3>
+              <p class="mb-2">Não é necessário adicionar imagens manualmente no código do projeto! O painel possui upload integrado conectado diretamente ao storage do <strong>Cloudflare R2</strong>.</p>
+              <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li>Formatos suportados: <strong>PNG, JPG e JPEG</strong> de até 5MB.</li>
+                <li><strong>Compressão Automática:</strong> Se você enviar uma imagem muito pesada (maior que 1.1MB), o painel reduzirá suas dimensões (máximo 2560px de largura) e fará a compressão no seu navegador antes do envio. Isso melhora a velocidade de carregamento do site.</li>
+                <li><strong>Caminho Manual (Fallback):</strong> Caso queira usar um arquivo local da aplicação, você ainda pode digitar o caminho manual (ex: <code class="bg-neutral-100 px-1 py-0.5 rounded font-mono">/images/produtos/nome.webp</code>).</li>
+              </ul>
             </div>
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <h3 class="font-bold text-amber-800 mb-1">🔐 Segurança</h3>
-              <p class="text-amber-700 text-xs">A senha de acesso está definida no arquivo <code class="bg-amber-100 px-1 rounded font-mono">.env</code> na variável <code class="bg-amber-100 px-1 rounded font-mono">ADMIN_SECRET</code>. Troque para uma senha forte e nunca compartilhe. O painel só funciona no servidor — não é acessível sem a senha correta.</p>
+              <h3 class="font-bold text-amber-800 mb-1">🔐 Segurança e Deploy</h3>
+              <p class="text-amber-700 text-xs mb-2">O acesso ao painel admin requer autenticação via token Bearer. A senha é configurada na variável de ambiente <code class="bg-amber-100 px-1 rounded font-mono">ADMIN_SECRET</code>.</p>
+              <p class="text-amber-700 text-xs">Certifique-se de configurar as seguintes variáveis no seu ambiente de produção (Cloudflare Pages/Workers) ou no seu arquivo local <code class="bg-amber-100 px-1 rounded font-mono">.env</code>:</p>
+              <ul class="list-disc pl-5 mt-1 text-[11px] text-amber-700 space-y-0.5 font-mono">
+                <li>ADMIN_SECRET: Senha de acesso ao painel admin.</li>
+                <li>R2_PUBLIC_URL: URL pública do bucket R2 (ex: https://pub-xxx.r2.dev).</li>
+                <li>Bindings ativos: "DB" (Cloudflare D1) e "BUCKET" (Cloudflare R2).</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -483,18 +736,35 @@ function formatPrice(v: number) {
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <label class="form-label">Preço (R$) <span class="text-red-500">*</span></label>
-                <input v-model.number="form.price" type="number" min="0" step="0.01" class="form-input" placeholder="0.00" />
+                <input v-model="form.price" type="text" class="form-input" placeholder="Ex: 150,50 ou 150.50" />
               </div>
               <div>
                 <label class="form-label">Preço Antigo / De (opcional)</label>
-                <input v-model.number="form.oldPrice" type="number" min="0" step="0.01" class="form-input" placeholder="Deixe vazio se sem promoção" />
+                <input v-model="form.oldPrice" type="text" class="form-input" placeholder="Ex: 190,00" />
               </div>
             </div>
 
             <!-- Parcelamento -->
-            <div>
-              <label class="form-label">Texto de Parcelamento</label>
-              <input v-model="form.installments" type="text" placeholder="ex: 3x de R$ 65,30 sem juros" class="form-input" />
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label class="form-label">Opção de Parcelamento</label>
+                <select v-model="installmentOption" class="form-input">
+                  <option value="">Sem parcelamento</option>
+                  <option value="2">Calcular em 2x sem juros</option>
+                  <option value="3">Calcular em 3x sem juros</option>
+                  <option value="custom">Texto personalizado</option>
+                </select>
+              </div>
+              <div>
+                <label class="form-label">Texto de Parcelamento</label>
+                <input
+                  v-model="form.installments"
+                  :disabled="installmentOption !== 'custom'"
+                  type="text"
+                  placeholder="Calculado automaticamente..."
+                  class="form-input disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                />
+              </div>
             </div>
 
             <!-- Categorias -->
@@ -641,6 +911,78 @@ function formatPrice(v: number) {
         </div>
       </div>
     </Transition>
+
+    <!-- ── Category Edit Modal ───────────────────────────── -->
+    <Transition name="fade">
+      <div v-if="showCategoryForm" class="fixed inset-0 z-50 flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm p-0 md:p-4">
+        <div class="bg-white w-full md:max-w-md rounded-t-3xl md:rounded-3xl shadow-2xl flex flex-col max-h-[90vh]">
+          <div class="flex items-center justify-between px-6 py-4 border-b border-neutral-100">
+            <h2 class="font-extrabold text-burgundy text-base">Editar Categoria</h2>
+            <button @click="showCategoryForm = false" class="p-2 hover:bg-neutral-100 rounded-full transition-colors text-neutral-500">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-5 overflow-y-auto">
+            <div>
+              <label class="form-label">ID da Categoria</label>
+              <input v-model="categoryForm.id" disabled type="text" class="form-input bg-neutral-100 cursor-not-allowed" />
+            </div>
+
+            <div>
+              <label class="form-label">Nome da Categoria <span class="text-red-500">*</span></label>
+              <input v-model="categoryForm.name" type="text" placeholder="Ex: Buquês Especiais" class="form-input" />
+            </div>
+
+            <div>
+              <label class="form-label">Imagem da Categoria</label>
+              <div class="flex items-center space-x-3 bg-neutral-50 border border-neutral-200 rounded-2xl p-3">
+                <div class="relative w-16 h-16 rounded-xl overflow-hidden bg-neutral-200 flex-shrink-0 border border-neutral-300">
+                  <img v-if="categoryForm.image" :src="categoryForm.image" class="w-full h-full object-cover" />
+                  <div v-else class="w-full h-full flex items-center justify-center text-neutral-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                  <!-- Spinner de upload -->
+                  <div v-if="isUploadingCategory" class="absolute inset-0 bg-white/80 flex items-center justify-center">
+                    <svg class="animate-spin h-5 w-5 text-burgundy" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+                      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+                    </svg>
+                  </div>
+                </div>
+
+                <div class="flex-grow space-y-2">
+                  <label class="cursor-pointer flex items-center justify-center space-x-1.5 border border-dashed border-neutral-300 text-neutral-600 text-xs font-semibold px-3 py-2 rounded-xl hover:border-burgundy hover:text-burgundy transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                    </svg>
+                    <span>Alterar Imagem</span>
+                    <input type="file" accept=".png,.jpg,.jpeg" class="hidden" @change="onCategoryFileChange" />
+                  </label>
+                  <input v-model="categoryForm.image" type="text" placeholder="URL da Imagem" class="form-input text-xs" />
+                </div>
+              </div>
+            </div>
+
+            <p v-if="categoryUploadError" class="text-xs text-red-600 font-semibold bg-red-50 border border-red-100 rounded-xl px-3 py-2">
+              {{ categoryUploadError }}
+            </p>
+          </div>
+
+          <div class="px-6 py-4 border-t border-neutral-100 flex space-x-3">
+            <button @click="showCategoryForm = false" class="flex-1 border border-neutral-200 text-neutral-600 font-semibold py-2.5 rounded-xl hover:bg-neutral-50 transition-colors text-sm">Cancelar</button>
+            <button @click="saveCategory" class="flex-1 bg-burgundy text-white font-bold py-2.5 rounded-xl hover:bg-[#920000] transition-colors text-sm shadow-md">
+              Salvar Alterações
+            </button>
+          </div>
+        </div>
+      </div>
+    </Transition>
+
 
   </div>
 </template>

@@ -1,5 +1,5 @@
-import { writeFile, mkdir } from 'fs/promises'
-import { resolve, extname } from 'path'
+import { extname } from 'path'
+import { useBucket } from '~/server/utils/cloudflare'
 
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg']
 const MAX_SIZE_BYTES = 5 * 1024 * 1024 // 5MB
@@ -18,6 +18,14 @@ export default defineEventHandler(async (event) => {
 
   if (event.method !== 'POST') {
     throw createError({ statusCode: 405, statusMessage: 'Method Not Allowed' })
+  }
+
+  // Define a pasta do storage (produtos por padrão, ou categorias)
+  const query = getQuery(event)
+  const folder = (query.folder as string) || 'produtos'
+
+  if (folder !== 'produtos' && folder !== 'categorias') {
+    throw createError({ statusCode: 400, statusMessage: 'Pasta inválida. Use "produtos" ou "categorias"' })
   }
 
   const parts = await readMultipartFormData(event)
@@ -39,7 +47,7 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: 400, statusMessage: 'Arquivo muito grande (máx. 5MB)' })
   }
 
-  // Sanitiza o nome do arquivo: remove espaços e caracteres especiais
+  // Sanitiza o nome do arquivo
   const ext = extname(filePart.filename).toLowerCase()
   const safeName = filePart.filename
     .replace(ext, '')
@@ -48,18 +56,31 @@ export default defineEventHandler(async (event) => {
     .replace(/-+/g, '-')
     .substring(0, 60)
 
-  const finalName = `${safeName}${ext}`
-  const uploadDir = resolve('./public/images/produtos')
+  const finalName = `${safeName}-${Date.now()}${ext}` // Adiciona timestamp para evitar conflitos de nomes iguais
+  const storagePath = `${folder}/${finalName}`
 
-  // Garante que a pasta existe
-  await mkdir(uploadDir, { recursive: true })
+  const bucket = useBucket(event)
 
-  const filePath = resolve(uploadDir, finalName)
-  await writeFile(filePath, filePart.data)
+  try {
+    // Faz upload do buffer para o bucket do Cloudflare R2
+    await bucket.put(storagePath, filePart.data, {
+      httpMetadata: { contentType: mimeType }
+    })
 
-  return {
-    ok: true,
-    url: `/images/produtos/${finalName}`,
-    filename: finalName,
+    // Retorna a URL pública gerada usando a base configurada nas variáveis de ambiente
+    const r2PublicUrl = process.env.R2_PUBLIC_URL || 'https://sua-url-r2-publica.dev'
+    const publicUrl = `${r2PublicUrl}/${storagePath}`
+
+    return {
+      ok: true,
+      url: publicUrl,
+      filename: finalName
+    }
+  } catch (e: any) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Erro ao fazer upload no Cloudflare R2: ${e.message}`
+    })
   }
 })
+

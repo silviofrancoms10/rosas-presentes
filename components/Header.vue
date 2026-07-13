@@ -6,13 +6,9 @@ const router = useRouter()
 const route = useRoute()
 const cartStore = useCartStore()
 
-const categories = [
-  { id: 'todos', name: 'Todos' },
-  { id: 'destaques', name: 'Destaques' },
-  { id: 'buques', name: 'Buquês' },
-  { id: 'cestas', name: 'Cestas' },
-  { id: 'presentes', name: 'Presentes' }
-]
+const { data: categoriesData } = await useFetch<any[]>('/api/categories')
+const categories = computed(() => categoriesData.value || [])
+
 
 const currentCategory = computed(() => {
   return route.query.category || 'todos'
