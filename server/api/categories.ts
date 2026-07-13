@@ -5,7 +5,7 @@ export default defineEventHandler(async (event) => {
     const db = useDB(event)
     const { results } = await db.prepare('SELECT * FROM categories ORDER BY id ASC').all()
     return results || []
-  } catch (e) {
+  } catch {
     // Retorna as categorias estáticas como fallback caso a tabela não tenha sido criada/configurada ainda
     return [
       { id: 'todos', name: 'Todos', image: '/images/categorias/categoria-todos.jpg' },

@@ -3518,7 +3518,7 @@ const categories = defineEventHandler(async (event) => {
     const db = useDB(event);
     const { results } = await db.prepare("SELECT * FROM categories ORDER BY id ASC").all();
     return results || [];
-  } catch (e) {
+  } catch {
     return [
       { id: "todos", name: "Todos", image: "/images/categorias/categoria-todos.jpg" },
       { id: "destaques", name: "Destaques", image: "/images/categorias/categoria-todos.jpg" },

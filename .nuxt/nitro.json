@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-13T06:13:37.741Z",
+  "date": "2026-07-13T06:44:50.483Z",
   "preset": "cloudflare-dev",
   "framework": {
     "name": "nuxt",
@@ -9,9 +9,9 @@
     "nitro": "2.13.4"
   },
   "dev": {
-    "pid": 31206,
+    "pid": 36205,
     "workerAddress": {
-      "socketPath": "\u0000nitro-worker-31206-1-1-3742.sock"
+      "socketPath": "\u0000nitro-worker-36205-1-1-1515.sock"
     }
   }
 }

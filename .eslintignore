@@ -1,0 +1,7 @@
+dist/
+dist-ssr/
+coverage/
+.nuxt/
+.vercel/
+.wrangler/
+node_modules/
