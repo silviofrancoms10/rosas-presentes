@@ -17,7 +17,8 @@ export default defineNuxtConfig({
         onwarn(warning, warn) {
           if (
             warning.code === 'SOURCEMAP_BROKEN' &&
-            (warning.plugin === 'nuxt:module-preload-polyfill' || warning.plugin?.includes('tailwindcss'))
+            (warning.plugin === 'nuxt:module-preload-polyfill' ||
+              warning.plugin?.includes('tailwindcss'))
           ) {
             return
           }
@@ -47,6 +48,9 @@ export default defineNuxtConfig({
 
   nitro: {
     preset: 'cloudflare-pages',
+    cloudflare: {
+      nodeCompat: true,
+    },
   },
 
   telemetry: false,
