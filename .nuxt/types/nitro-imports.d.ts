@@ -125,6 +125,7 @@ declare global {
   const useRuntimeConfig: typeof import('../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.133.0_rolldown@1.1.5_srvx@0.11.22_vite@8.1.4_@types+node@_20ed07ead583a33dbba630ae0c4e99b9/node_modules/nitropack/dist/runtime/internal/config').useRuntimeConfig
   const useSession: typeof import('../../node_modules/.pnpm/h3@1.15.11/node_modules/h3').useSession
   const useStorage: typeof import('../../node_modules/.pnpm/nitropack@2.13.4_oxc-parser@0.133.0_rolldown@1.1.5_srvx@0.11.22_vite@8.1.4_@types+node@_20ed07ead583a33dbba630ae0c4e99b9/node_modules/nitropack/dist/runtime/internal/storage').useStorage
+  const useSupabase: typeof import('../../server/utils/supabase').useSupabase
   const writeEarlyHints: typeof import('../../node_modules/.pnpm/h3@1.15.11/node_modules/h3').writeEarlyHints
 }
 // for type re-export
@@ -147,3 +148,4 @@ export { defineTask, runTask } from 'nitropack/runtime/internal/task';
 export { defineNitroErrorHandler } from 'nitropack/runtime/internal/error/utils';
 export { buildAssetsURL as __buildAssetsURL, publicAssetsURL as __publicAssetsURL } from '/home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+nitro-server@4.4.8_019ec01b8e16a9d8ee1af529f78c6768/node_modules/@nuxt/nitro-server/dist/runtime/utils/paths';
 export { defineAppConfig } from '/home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+nitro-server@4.4.8_019ec01b8e16a9d8ee1af529f78c6768/node_modules/@nuxt/nitro-server/dist/runtime/utils/config';
+export { useSupabase } from '/home/franco/Documents/front/rosas-presentes/server/utils/supabase';

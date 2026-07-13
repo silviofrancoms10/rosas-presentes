@@ -627,12 +627,12 @@ const _routes = [
   {
     name: "checkout",
     path: "/checkout",
-    component: () => import('./checkout-9xJ7Q9-H.mjs')
+    component: () => import('./checkout-rfKZA2-X.mjs')
   },
   {
     name: "index",
     path: "/",
-    component: () => import('./index-Jw_2ZPrb.mjs')
+    component: () => import('./index-Crvx1SZI.mjs')
   }
 ];
 var commonjsGlobal = typeof globalThis !== "undefined" ? globalThis : typeof global !== "undefined" ? global : typeof self !== "undefined" ? self : {};

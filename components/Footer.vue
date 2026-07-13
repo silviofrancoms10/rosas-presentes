@@ -19,9 +19,7 @@ const mapsLink =
       class="absolute -bottom-24 -right-24 w-96 h-96 bg-burgundy/20 rounded-full blur-3xl pointer-events-none"
     ></div>
 
-    <div
-      class="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 relative z-10"
-    >
+    <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 relative z-10">
       <!-- Column 1: Store & Contact -->
       <div class="flex-1 space-y-5">
         <div class="flex items-center space-x-2">
@@ -57,7 +55,6 @@ const mapsLink =
               >(67) 99947-6896</span
             >
           </a>
-
 
           <!-- Address Link -->
           <a
@@ -256,7 +253,7 @@ const mapsLink =
       <div class="flex items-center space-x-1">
         <span>Desenvolvido com</span>
         <span class="text-crimson text-sm">♥</span>
-        <span>para Campo Grande - MS</span>
+        <span><a href="https://dsdesenvolvimento.vercel.app/"></a>por DS Desenvolvimento</span>
       </div>
     </div>
   </footer>
