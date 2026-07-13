@@ -5,6 +5,8 @@
 wrangler.toml
 !wrangler.toml.example
 
+# Wrangler local state
+.wrangler
 
 # Nuxt build output
 .nuxt

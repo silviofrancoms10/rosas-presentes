@@ -32,6 +32,5 @@ export { setInterval } from '#app/compat/interval';
 export { definePageMeta, PageMeta } from '#app/composables/pages';
 export { defineLazyHydrationComponent } from '#app/composables/lazy-hydration';
 export { useCartStore, CartItem } from '../stores/cartStore';
-export { useCounterStore } from '../stores/counter';
 export { defineStore, acceptHMRUpdate, usePinia, storeToRefs } from '../node_modules/.pnpm/@pinia+nuxt@0.11.3_magicast@0.5.3_pinia@3.0.4_typescript@7.0.2_vue@3.5.39_typescript@7.0.2__/node_modules/@pinia/nuxt/dist/runtime/composables';
 export { useNuxtDevTools } from '../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@8.1.4_@types+node@26.1.1_esbuild@0.28.1_jiti@2.7.0_terser@5.4_f916916bfd69f4188e9a84a8100f5129/node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';

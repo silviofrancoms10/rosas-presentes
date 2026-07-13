@@ -105,7 +105,6 @@ declare global {
   const useAttrs: typeof import('vue').useAttrs
   const useCartStore: typeof import('../../stores/cartStore').useCartStore
   const useCookie: typeof import('../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/composables/cookie').useCookie
-  const useCounterStore: typeof import('../../stores/counter').useCounterStore
   const useCssModule: typeof import('vue').useCssModule
   const useCssVars: typeof import('vue').useCssVars
   const useError: typeof import('../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/composables/error').useError
@@ -318,7 +317,6 @@ declare module 'vue' {
     readonly useAttrs: UnwrapRef<typeof import('vue')['useAttrs']>
     readonly useCartStore: UnwrapRef<typeof import('../../stores/cartStore')['useCartStore']>
     readonly useCookie: UnwrapRef<typeof import('../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/composables/cookie')['useCookie']>
-    readonly useCounterStore: UnwrapRef<typeof import('../../stores/counter')['useCounterStore']>
     readonly useCssModule: UnwrapRef<typeof import('vue')['useCssModule']>
     readonly useCssVars: UnwrapRef<typeof import('vue')['useCssVars']>
     readonly useError: UnwrapRef<typeof import('../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/composables/error')['useError']>

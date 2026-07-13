@@ -14,8 +14,12 @@ type HydrationStrategies = {
 type LazyComponent<T> = DefineComponent<HydrationStrategies, {}, {}, {}, {}, {}, {}, { hydrated: () => void }> & T
 
 interface _GlobalComponents {
+  CartDrawer: typeof import("../../components/CartDrawer.vue")['default']
   Footer: typeof import("../../components/Footer.vue")['default']
   Header: typeof import("../../components/Header.vue")['default']
+  MobileNavBar: typeof import("../../components/MobileNavBar.vue")['default']
+  ProductCard: typeof import("../../components/ProductCard.vue")['default']
+  ProductDetailModal: typeof import("../../components/ProductDetailModal.vue")['default']
   NuxtWelcome: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/welcome.vue")['default']
   NuxtLayout: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/nuxt-layout")['default']
   NuxtErrorBoundary: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']
@@ -40,8 +44,12 @@ interface _GlobalComponents {
   Html: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/head/runtime/components")['Html']
   Body: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/head/runtime/components")['Body']
   NuxtIsland: typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/nuxt-island")['default']
+  LazyCartDrawer: LazyComponent<typeof import("../../components/CartDrawer.vue")['default']>
   LazyFooter: LazyComponent<typeof import("../../components/Footer.vue")['default']>
   LazyHeader: LazyComponent<typeof import("../../components/Header.vue")['default']>
+  LazyMobileNavBar: LazyComponent<typeof import("../../components/MobileNavBar.vue")['default']>
+  LazyProductCard: LazyComponent<typeof import("../../components/ProductCard.vue")['default']>
+  LazyProductDetailModal: LazyComponent<typeof import("../../components/ProductDetailModal.vue")['default']>
   LazyNuxtWelcome: LazyComponent<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/welcome.vue")['default']>
   LazyNuxtLayout: LazyComponent<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/nuxt-layout")['default']>
   LazyNuxtErrorBoundary: LazyComponent<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/components/nuxt-error-boundary.vue")['default']>

@@ -1,5 +1,5 @@
 import process from 'node:process';globalThis._importMeta_={url:import.meta.url,env:process.env};import { tmpdir } from 'node:os';
-import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getResponseStatus, getRouterParam, getHeader, readMultipartFormData, getResponseStatusText } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
+import { defineEventHandler, handleCacheHeaders, splitCookiesString, createEvent, fetchWithEvent, isEvent, eventHandler, setHeaders, createError, sendRedirect, proxyRequest, getRequestHeader, setResponseHeaders, setResponseStatus, send, getRequestHeaders, setResponseHeader, appendResponseHeader, getRequestURL, getResponseHeader, getResponseStatus, removeResponseHeader, getQuery as getQuery$1, readBody, createApp, createRouter as createRouter$1, toNodeListener, lazyEventHandler, getRouterParam, getHeader, readMultipartFormData, getResponseStatusText } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/h3@1.15.11/node_modules/h3/dist/index.mjs';
 import { Server } from 'node:http';
 import { resolve, dirname, join, extname } from 'node:path';
 import crypto$1 from 'node:crypto';
@@ -8,7 +8,7 @@ import { escapeHtml } from 'file:///home/franco/Documents/front/rosas-presentes/
 import viteNodeEntry_mjs from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs';
 import { viteNodeFetch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/vue-bundle-renderer@2.3.1/node_modules/vue-bundle-renderer/dist/runtime.mjs';
-import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
+import { parseURL, withoutBase, joinURL, getQuery, withQuery, joinRelativeURL, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/destr@2.0.5/node_modules/destr/dist/index.mjs';
 import { createHooks } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/hookable@5.5.3/node_modules/hookable/dist/index.mjs';
 import { createFetch, Headers as Headers$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ofetch@1.5.1/node_modules/ofetch/dist/node.mjs';
@@ -691,7 +691,11 @@ const _inlineRuntimeConfig = {
       }
     }
   },
-  "public": {}
+  "public": {},
+  "wrangler": {
+    "configPath": "/home/franco/Documents/front/rosas-presentes/wrangler.toml",
+    "persistDir": "/home/franco/Documents/front/rosas-presentes/.wrangler/state/v3"
+  }
 };
 const envOptions = {
   prefix: "NITRO_",
@@ -2076,6 +2080,201 @@ async function errorHandler(error, event) {
   // H3 will handle fallback
 }
 
+function defineRenderHandler(render) {
+  const runtimeConfig = useRuntimeConfig();
+  return eventHandler(async (event) => {
+    const nitroApp = useNitroApp();
+    const ctx = { event, render, response: void 0 };
+    await nitroApp.hooks.callHook("render:before", ctx);
+    if (!ctx.response) {
+      if (event.path === `${runtimeConfig.app.baseURL}favicon.ico`) {
+        setResponseHeader(event, "Content-Type", "image/x-icon");
+        return send(
+          event,
+          "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+        );
+      }
+      ctx.response = await ctx.render(event);
+      if (!ctx.response) {
+        const _currentStatus = getResponseStatus(event);
+        setResponseStatus(event, _currentStatus === 200 ? 500 : _currentStatus);
+        return send(
+          event,
+          "No response returned from render handler: " + event.path
+        );
+      }
+    }
+    await nitroApp.hooks.callHook("render:response", ctx.response, ctx);
+    if (ctx.response.headers) {
+      setResponseHeaders(event, ctx.response.headers);
+    }
+    if (ctx.response.statusCode || ctx.response.statusMessage) {
+      setResponseStatus(
+        event,
+        ctx.response.statusCode,
+        ctx.response.statusMessage
+      );
+    }
+    return ctx.response.body;
+  });
+}
+
+const scheduledTasks = false;
+
+const tasks = {
+  
+};
+
+const __runningTasks__ = {};
+async function runTask(name, {
+  payload = {},
+  context = {}
+} = {}) {
+  if (__runningTasks__[name]) {
+    return __runningTasks__[name];
+  }
+  if (!(name in tasks)) {
+    throw createError({
+      message: `Task \`${name}\` is not available!`,
+      statusCode: 404
+    });
+  }
+  if (!tasks[name].resolve) {
+    throw createError({
+      message: `Task \`${name}\` is not implemented!`,
+      statusCode: 501
+    });
+  }
+  const handler = await tasks[name].resolve();
+  const taskEvent = { name, payload, context };
+  __runningTasks__[name] = handler.run(taskEvent);
+  try {
+    const res = await __runningTasks__[name];
+    return res;
+  } finally {
+    delete __runningTasks__[name];
+  }
+}
+
+function buildAssetsDir() {
+	
+	return useRuntimeConfig().app.buildAssetsDir;
+}
+function buildAssetsURL(...path) {
+	return joinRelativeURL(publicAssetsURL(), buildAssetsDir(), ...path);
+}
+function publicAssetsURL(...path) {
+	
+	const app = useRuntimeConfig().app;
+	const publicBase = app.cdnURL || app.baseURL;
+	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
+}
+
+const useDB = (event) => {
+  const db = event.context.cloudflare?.env?.DB;
+  if (!db) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Cloudflare D1 Database binding "DB" n\xE3o encontrada. Verifique se a vari\xE1vel/binding est\xE1 ativa no painel da Cloudflare ou executando via Wrangler.'
+    });
+  }
+  return db;
+};
+const useBucket = (event) => {
+  const bucket = event.context.cloudflare?.env?.BUCKET;
+  if (!bucket) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Cloudflare R2 Bucket binding "BUCKET" n\xE3o encontrada. Verifique se o bucket est\xE1 configurado no wrangler.toml.'
+    });
+  }
+  return bucket;
+};
+
+const proxy = await _getPlatformProxy().catch((error) => {
+  console.error("Failed to initialize wrangler bindings proxy", error);
+  return _createStubProxy();
+});
+globalThis.__env__ = proxy.env;
+globalThis.__wait_until__ = proxy.ctx.waitUntil.bind(proxy.ctx);
+const _x7FWxaUX1GMiuO8cGUtNd_b4Sl36ZaRpaBHIMXRHeE = (function(nitroApp) {
+  nitroApp.hooks.hook("request", async (event) => {
+    event.context.cf = proxy.cf;
+    event.context.waitUntil = proxy.ctx.waitUntil.bind(proxy.ctx);
+    const request = new Request(getRequestURL(event));
+    request.cf = proxy.cf;
+    event.context.cloudflare = {
+      ...event.context.cloudflare,
+      request,
+      env: proxy.env,
+      context: proxy.ctx
+    };
+    event.node.req.__unenv__ = {
+      ...event.node.req.__unenv__,
+      waitUntil: event.context.waitUntil
+    };
+  });
+  nitroApp.hooks._hooks.request.unshift(nitroApp.hooks._hooks.request.pop());
+  nitroApp.hooks.hook("close", () => {
+    return proxy?.dispose();
+  });
+});
+async function _getPlatformProxy() {
+  const _pkg = "wrangler";
+  const { getPlatformProxy } = await import(_pkg).catch(() => {
+    throw new Error(
+      "Package `wrangler` not found, please install it with: `npx nypm@latest add -D wrangler`"
+    );
+  });
+  const runtimeConfig = useRuntimeConfig();
+  const proxyOptions = {
+    configPath: runtimeConfig.wrangler.configPath,
+    persist: { path: runtimeConfig.wrangler.persistDir }
+  };
+  if (runtimeConfig.wrangler.environment) {
+    proxyOptions.environment = runtimeConfig.wrangler.environment;
+  }
+  const proxy2 = await getPlatformProxy(proxyOptions);
+  return proxy2;
+}
+function _createStubProxy() {
+  return {
+    env: {},
+    cf: {},
+    ctx: {
+      waitUntil() {
+      },
+      passThroughOnException() {
+      },
+      props: {}
+    },
+    caches: {
+      open() {
+        const result = Promise.resolve(new _CacheStub());
+        return result;
+      },
+      get default() {
+        return new _CacheStub();
+      }
+    },
+    dispose: () => Promise.resolve()
+  };
+}
+class _CacheStub {
+  delete() {
+    const result = Promise.resolve(false);
+    return result;
+  }
+  match() {
+    const result = Promise.resolve(void 0);
+    return result;
+  }
+  put() {
+    const result = Promise.resolve();
+    return result;
+  }
+}
+
 const script = `
 if (!window.__NUXT_DEVTOOLS_TIME_METRIC__) {
   Object.defineProperty(window, '__NUXT_DEVTOOLS_TIME_METRIC__', {
@@ -2199,7 +2398,8 @@ function onConsoleLog(callback) {
 }
 
 const plugins = [
-  _Y667tH33tibAyLgExYH9T0f7JGQ55pT6gHZSyCBBS0,
+  _x7FWxaUX1GMiuO8cGUtNd_b4Sl36ZaRpaBHIMXRHeE,
+_Y667tH33tibAyLgExYH9T0f7JGQ55pT6gHZSyCBBS0,
 _eF6oVopBcdA0I92_8woJcnpXs1g4mX4YikqNUJQHvl4,
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
@@ -2374,20 +2574,6 @@ function setSSRError(ssrContext, error) {
 	ssrContext.error = true;
 	ssrContext.payload = { error };
 	ssrContext.url = error.url;
-}
-
-function buildAssetsDir() {
-	
-	return useRuntimeConfig().app.buildAssetsDir;
-}
-function buildAssetsURL(...path) {
-	return joinRelativeURL(publicAssetsURL(), buildAssetsDir(), ...path);
-}
-function publicAssetsURL(...path) {
-	
-	const app = useRuntimeConfig().app;
-	const publicBase = app.cdnURL || app.baseURL;
-	return path.length ? joinRelativeURL(publicBase, ...path) : publicBase;
 }
 
 // @ts-expect-error private property consumed by vite-generated url helpers
@@ -2898,82 +3084,6 @@ function useNitroApp() {
 }
 runNitroPlugins(nitroApp$1);
 
-function defineRenderHandler(render) {
-  const runtimeConfig = useRuntimeConfig();
-  return eventHandler(async (event) => {
-    const nitroApp = useNitroApp();
-    const ctx = { event, render, response: void 0 };
-    await nitroApp.hooks.callHook("render:before", ctx);
-    if (!ctx.response) {
-      if (event.path === `${runtimeConfig.app.baseURL}favicon.ico`) {
-        setResponseHeader(event, "Content-Type", "image/x-icon");
-        return send(
-          event,
-          "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-        );
-      }
-      ctx.response = await ctx.render(event);
-      if (!ctx.response) {
-        const _currentStatus = getResponseStatus(event);
-        setResponseStatus(event, _currentStatus === 200 ? 500 : _currentStatus);
-        return send(
-          event,
-          "No response returned from render handler: " + event.path
-        );
-      }
-    }
-    await nitroApp.hooks.callHook("render:response", ctx.response, ctx);
-    if (ctx.response.headers) {
-      setResponseHeaders(event, ctx.response.headers);
-    }
-    if (ctx.response.statusCode || ctx.response.statusMessage) {
-      setResponseStatus(
-        event,
-        ctx.response.statusCode,
-        ctx.response.statusMessage
-      );
-    }
-    return ctx.response.body;
-  });
-}
-
-const scheduledTasks = false;
-
-const tasks = {
-  
-};
-
-const __runningTasks__ = {};
-async function runTask(name, {
-  payload = {},
-  context = {}
-} = {}) {
-  if (__runningTasks__[name]) {
-    return __runningTasks__[name];
-  }
-  if (!(name in tasks)) {
-    throw createError({
-      message: `Task \`${name}\` is not available!`,
-      statusCode: 404
-    });
-  }
-  if (!tasks[name].resolve) {
-    throw createError({
-      message: `Task \`${name}\` is not implemented!`,
-      statusCode: 501
-    });
-  }
-  const handler = await tasks[name].resolve();
-  const taskEvent = { name, payload, context };
-  __runningTasks__[name] = handler.run(taskEvent);
-  try {
-    const res = await __runningTasks__[name];
-    return res;
-  } finally {
-    delete __runningTasks__[name];
-  }
-}
-
 if (!globalThis.crypto) {
   globalThis.crypto = crypto$1.webcrypto;
 }
@@ -3106,33 +3216,9 @@ const styles$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: styles
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const useDB = (event) => {
-  var _a, _b;
-  const db = (_b = (_a = event.context.cloudflare) == null ? void 0 : _a.env) == null ? void 0 : _b.DB;
-  if (!db) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Cloudflare D1 Database binding "DB" n\xE3o encontrada. Verifique se a vari\xE1vel/binding est\xE1 ativa no painel da Cloudflare ou executando via Wrangler.'
-    });
-  }
-  return db;
-};
-const useBucket = (event) => {
-  var _a, _b;
-  const bucket = (_b = (_a = event.context.cloudflare) == null ? void 0 : _a.env) == null ? void 0 : _b.BUCKET;
-  if (!bucket) {
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Cloudflare R2 Bucket binding "BUCKET" n\xE3o encontrada. Verifique se o bucket est\xE1 configurado no wrangler.toml.'
-    });
-  }
-  return bucket;
-};
-
 function checkAuth$3(event) {
-  var _a;
   const secret = process.env.ADMIN_SECRET;
-  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const auth = getHeader(event, "authorization") ?? "";
   const token = auth.replace("Bearer ", "").trim();
   if (!secret || token !== secret) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
@@ -3167,16 +3253,14 @@ const categories$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProper
 const ALLOWED_TYPES$1 = ["image/png", "image/jpeg", "image/jpg"];
 const MAX_SIZE_BYTES$1 = 5 * 1024 * 1024;
 function checkAuth$2(event) {
-  var _a;
   const secret = process.env.ADMIN_SECRET;
-  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const auth = getHeader(event, "authorization") ?? "";
   const token = auth.replace("Bearer ", "").trim();
   if (!secret || token !== secret) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
   }
 }
 const upload$2 = defineEventHandler(async (event) => {
-  var _a;
   checkAuth$2(event);
   if (event.method !== "POST") {
     throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
@@ -3196,7 +3280,7 @@ const upload$2 = defineEventHandler(async (event) => {
   }
   const categoryName = categoryNamePart.data.toString("utf-8");
   const oldImageUrl = oldImageUrlPart ? oldImageUrlPart.data.toString("utf-8") : "";
-  const mimeType = (_a = filePart.type) != null ? _a : "";
+  const mimeType = filePart.type ?? "";
   if (!ALLOWED_TYPES$1.includes(mimeType)) {
     throw createError({ statusCode: 400, statusMessage: "Apenas PNG, JPG e JPEG s\xE3o permitidos" });
   }
@@ -3255,9 +3339,8 @@ const login$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
 }, Symbol.toStringTag, { value: 'Module' }));
 
 function checkAuth$1(event) {
-  var _a;
   const secret = process.env.ADMIN_SECRET;
-  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const auth = getHeader(event, "authorization") ?? "";
   const token = auth.replace("Bearer ", "").trim();
   if (!secret || token !== secret) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
@@ -3369,16 +3452,14 @@ const products$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg"];
 const MAX_SIZE_BYTES = 5 * 1024 * 1024;
 function checkAuth(event) {
-  var _a;
   const secret = process.env.ADMIN_SECRET;
-  const auth = (_a = getHeader(event, "authorization")) != null ? _a : "";
+  const auth = getHeader(event, "authorization") ?? "";
   const token = auth.replace("Bearer ", "").trim();
   if (!secret || token !== secret) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
   }
 }
 const upload = defineEventHandler(async (event) => {
-  var _a;
   checkAuth(event);
   if (event.method !== "POST") {
     throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
@@ -3396,7 +3477,7 @@ const upload = defineEventHandler(async (event) => {
   if (!filePart || !filePart.data || !filePart.filename) {
     throw createError({ statusCode: 400, statusMessage: 'Campo "file" ausente' });
   }
-  const mimeType = (_a = filePart.type) != null ? _a : "";
+  const mimeType = filePart.type ?? "";
   if (!ALLOWED_TYPES.includes(mimeType)) {
     throw createError({ statusCode: 400, statusMessage: "Apenas PNG, JPG e JPEG s\xE3o permitidos" });
   }
@@ -3721,3 +3802,4 @@ const renderer = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
   default: handler
 }, Symbol.toStringTag, { value: 'Module' }));
+//# sourceMappingURL=index.mjs.map

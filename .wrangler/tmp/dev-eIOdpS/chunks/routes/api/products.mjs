@@ -1,2 +1,0 @@
-import{d as a,c as s}from"../../nitro/nitro.mjs";import{u as r}from"../../_/cloudflare.mjs";const e=a(async a=>{const e=r(a);try{const{results:a}=await e.prepare("SELECT * FROM products ORDER BY created_at DESC").all();return(a||[]).map(a=>({...a,featured:1===a.featured,categories:JSON.parse(a.categories||"[]"),images:JSON.parse(a.images||"[]")}))}catch(a){throw s({statusCode:500,statusMessage:`Erro ao buscar produtos no Cloudflare D1: ${a.message}`})}});export{e as default};
-//# sourceMappingURL=products.mjs.map
