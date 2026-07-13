@@ -1,7 +1,4 @@
-import { readFile, writeFile } from 'fs/promises'
-import { resolve } from 'path'
-
-const PRODUCTS_PATH = resolve('./data/products.json')
+import { useSupabase } from '~/server/utils/supabase'
 
 // Verifica autenticação via header Authorization: Bearer <secret>
 function checkAuth(event: any) {
@@ -17,11 +14,19 @@ export default defineEventHandler(async (event) => {
   checkAuth(event)
 
   const method = event.method
+  const client = useSupabase()
 
   // GET - listar todos os produtos
   if (method === 'GET') {
-    const raw = await readFile(PRODUCTS_PATH, 'utf-8')
-    return JSON.parse(raw)
+    const { data, error } = await client
+      .from('products')
+      .select('*')
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao buscar produtos: ${error.message}` })
+    }
+    return data
   }
 
   // POST - criar novo produto
@@ -30,14 +35,29 @@ export default defineEventHandler(async (event) => {
     if (!body.id || !body.name || !body.price) {
       throw createError({ statusCode: 400, statusMessage: 'id, name e price são obrigatórios' })
     }
-    const raw = await readFile(PRODUCTS_PATH, 'utf-8')
-    const products = JSON.parse(raw)
+
     // Verifica ID duplicado
-    if (products.find((p: any) => p.id === body.id)) {
+    const { data: existing, error: checkError } = await client
+      .from('products')
+      .select('id')
+      .eq('id', body.id)
+      .maybeSingle()
+
+    if (checkError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao validar ID: ${checkError.message}` })
+    }
+    if (existing) {
       throw createError({ statusCode: 409, statusMessage: 'ID já existe' })
     }
-    products.push(body)
-    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), 'utf-8')
+
+    const { error: insertError } = await client
+      .from('products')
+      .insert([body])
+
+    if (insertError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao criar produto: ${insertError.message}` })
+    }
+
     return { ok: true, product: body }
   }
 
@@ -47,15 +67,17 @@ export default defineEventHandler(async (event) => {
     if (!body.id) {
       throw createError({ statusCode: 400, statusMessage: 'id é obrigatório' })
     }
-    const raw = await readFile(PRODUCTS_PATH, 'utf-8')
-    const products = JSON.parse(raw)
-    const idx = products.findIndex((p: any) => p.id === body.id)
-    if (idx === -1) {
-      throw createError({ statusCode: 404, statusMessage: 'Produto não encontrado' })
+
+    const { error: updateError } = await client
+      .from('products')
+      .update(body)
+      .eq('id', body.id)
+
+    if (updateError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao atualizar produto: ${updateError.message}` })
     }
-    products[idx] = { ...products[idx], ...body }
-    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), 'utf-8')
-    return { ok: true, product: products[idx] }
+
+    return { ok: true, product: body }
   }
 
   // DELETE - remover produto por id (query param)
@@ -65,13 +87,16 @@ export default defineEventHandler(async (event) => {
     if (!id) {
       throw createError({ statusCode: 400, statusMessage: 'query param id é obrigatório' })
     }
-    const raw = await readFile(PRODUCTS_PATH, 'utf-8')
-    const products = JSON.parse(raw)
-    const filtered = products.filter((p: any) => p.id !== id)
-    if (filtered.length === products.length) {
-      throw createError({ statusCode: 404, statusMessage: 'Produto não encontrado' })
+
+    const { error: deleteError } = await client
+      .from('products')
+      .delete()
+      .eq('id', id)
+
+    if (deleteError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao remover produto: ${deleteError.message}` })
     }
-    await writeFile(PRODUCTS_PATH, JSON.stringify(filtered, null, 2), 'utf-8')
+
     return { ok: true, removed: id }
   }
 

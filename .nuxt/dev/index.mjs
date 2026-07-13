@@ -7,7 +7,8 @@ import { parentPort, threadId } from 'node:worker_threads';
 import { escapeHtml } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@vue+shared@3.5.39/node_modules/@vue/shared/dist/shared.cjs.js';
 import viteNodeEntry_mjs from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node-entry.mjs';
 import { viteNodeFetch } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@nuxt+vite-builder@4.4.8_9b59d35e342f75aa80190754edfd473e/node_modules/@nuxt/vite-builder/dist/vite-node.mjs';
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, mkdir, writeFile } from 'node:fs/promises';
+import { createClient } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/@supabase+supabase-js@2.110.2/node_modules/@supabase/supabase-js/dist/index.mjs';
 import { createRenderer, getRequestDependencies, getPreloadLinks, getPrefetchLinks } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/vue-bundle-renderer@2.3.1/node_modules/vue-bundle-renderer/dist/runtime.mjs';
 import { parseURL, withoutBase, joinURL, getQuery, withQuery, withTrailingSlash, decodePath, withLeadingSlash, withoutTrailingSlash, encodePath, joinRelativeURL } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/ufo@1.6.4/node_modules/ufo/dist/index.mjs';
 import destr, { destr as destr$1 } from 'file:///home/franco/Documents/front/rosas-presentes/node_modules/.pnpm/destr@2.0.5/node_modules/destr/dist/index.mjs';
@@ -2204,7 +2205,22 @@ _eF6oVopBcdA0I92_8woJcnpXs1g4mX4YikqNUJQHvl4,
 _wH6JrtIxmaSoA8lCPWFnE9z4lQeXW6H5z3l5aymEQw
 ];
 
-const assets = {};
+const assets = {
+  "/index.mjs": {
+    "type": "text/javascript; charset=utf-8",
+    "etag": "\"1cc6e-g6UrrM4x2eajn9LPKuOIHSyMeQw\"",
+    "mtime": "2026-07-13T01:32:34.051Z",
+    "size": 117870,
+    "path": "index.mjs"
+  },
+  "/index.mjs.map": {
+    "type": "application/json",
+    "etag": "\"7150b-aTir+71uENo/tEyCVhHehhijjrg\"",
+    "mtime": "2026-07-13T01:32:34.051Z",
+    "size": 464139,
+    "path": "index.mjs.map"
+  }
+};
 
 function readAsset (id) {
   const serverDir = dirname$1(fileURLToPath(globalThis._importMeta_.url));
@@ -2735,7 +2751,7 @@ async function getIslandContext(event) {
 }
 
 const _lazy_1kIxy2 = () => Promise.resolve().then(function () { return login$1; });
-const _lazy_q_X5hY = () => Promise.resolve().then(function () { return products$4; });
+const _lazy_q_X5hY = () => Promise.resolve().then(function () { return products$3; });
 const _lazy_CC5GiG = () => Promise.resolve().then(function () { return upload$1; });
 const _lazy_7F7IFC = () => Promise.resolve().then(function () { return products$1; });
 const _lazy_XZrLxo = () => Promise.resolve().then(function () { return renderer; });
@@ -3117,7 +3133,15 @@ const login$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: login
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const PRODUCTS_PATH = resolve("./data/products.json");
+const useSupabase = () => {
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+  if (!url || !key) {
+    throw new Error("Supabase URL ou Key est\xE1 faltando nas vari\xE1veis de ambiente (.env)");
+  }
+  return createClient(url, key);
+};
+
 function checkAuth$1(event) {
   var _a;
   const secret = process.env.ADMIN_SECRET;
@@ -3127,25 +3151,33 @@ function checkAuth$1(event) {
     throw createError({ statusCode: 401, statusMessage: "Unauthorized" });
   }
 }
-const products$3 = defineEventHandler(async (event) => {
+const products$2 = defineEventHandler(async (event) => {
   checkAuth$1(event);
   const method = event.method;
+  const client = useSupabase();
   if (method === "GET") {
-    const raw = await readFile(PRODUCTS_PATH, "utf-8");
-    return JSON.parse(raw);
+    const { data, error } = await client.from("products").select("*").order("created_at", { ascending: false });
+    if (error) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao buscar produtos: ${error.message}` });
+    }
+    return data;
   }
   if (method === "POST") {
     const body = await readBody(event);
     if (!body.id || !body.name || !body.price) {
       throw createError({ statusCode: 400, statusMessage: "id, name e price s\xE3o obrigat\xF3rios" });
     }
-    const raw = await readFile(PRODUCTS_PATH, "utf-8");
-    const products = JSON.parse(raw);
-    if (products.find((p) => p.id === body.id)) {
+    const { data: existing, error: checkError } = await client.from("products").select("id").eq("id", body.id).maybeSingle();
+    if (checkError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao validar ID: ${checkError.message}` });
+    }
+    if (existing) {
       throw createError({ statusCode: 409, statusMessage: "ID j\xE1 existe" });
     }
-    products.push(body);
-    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), "utf-8");
+    const { error: insertError } = await client.from("products").insert([body]);
+    if (insertError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao criar produto: ${insertError.message}` });
+    }
     return { ok: true, product: body };
   }
   if (method === "PUT") {
@@ -3153,15 +3185,11 @@ const products$3 = defineEventHandler(async (event) => {
     if (!body.id) {
       throw createError({ statusCode: 400, statusMessage: "id \xE9 obrigat\xF3rio" });
     }
-    const raw = await readFile(PRODUCTS_PATH, "utf-8");
-    const products = JSON.parse(raw);
-    const idx = products.findIndex((p) => p.id === body.id);
-    if (idx === -1) {
-      throw createError({ statusCode: 404, statusMessage: "Produto n\xE3o encontrado" });
+    const { error: updateError } = await client.from("products").update(body).eq("id", body.id);
+    if (updateError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao atualizar produto: ${updateError.message}` });
     }
-    products[idx] = { ...products[idx], ...body };
-    await writeFile(PRODUCTS_PATH, JSON.stringify(products, null, 2), "utf-8");
-    return { ok: true, product: products[idx] };
+    return { ok: true, product: body };
   }
   if (method === "DELETE") {
     const query = getQuery$1(event);
@@ -3169,21 +3197,18 @@ const products$3 = defineEventHandler(async (event) => {
     if (!id) {
       throw createError({ statusCode: 400, statusMessage: "query param id \xE9 obrigat\xF3rio" });
     }
-    const raw = await readFile(PRODUCTS_PATH, "utf-8");
-    const products = JSON.parse(raw);
-    const filtered = products.filter((p) => p.id !== id);
-    if (filtered.length === products.length) {
-      throw createError({ statusCode: 404, statusMessage: "Produto n\xE3o encontrado" });
+    const { error: deleteError } = await client.from("products").delete().eq("id", id);
+    if (deleteError) {
+      throw createError({ statusCode: 500, statusMessage: `Erro ao remover produto: ${deleteError.message}` });
     }
-    await writeFile(PRODUCTS_PATH, JSON.stringify(filtered, null, 2), "utf-8");
     return { ok: true, removed: id };
   }
   throw createError({ statusCode: 405, statusMessage: "Method Not Allowed" });
 });
 
-const products$4 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
+const products$3 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   __proto__: null,
-  default: products$3
+  default: products$2
 }, Symbol.toStringTag, { value: 'Module' }));
 
 const ALLOWED_TYPES = ["image/png", "image/jpeg", "image/jpg"];
@@ -3237,135 +3262,16 @@ const upload$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
   default: upload
 }, Symbol.toStringTag, { value: 'Module' }));
 
-const products$2 = [
-	{
-		id: "flor-01",
-		name: "Buquê Magnífico de Rosas Vermelhas",
-		description: "Clássico e elegante buquê com 12 rosas vermelhas selecionadas e folhagens nobres.",
-		price: 195.9,
-		category: "buques",
-		categories: [
-			"buques",
-			"destaques"
-		],
-		image: "/images/produtos/buque-rosas-vermelhas.jpg",
-		images: [
-			"/images/produtos/buque-rosas-vermelhas.jpg",
-			"/images/produtos/buque-rosas-vermelhas-detail.jpg"
-		],
-		featured: true,
-		installments: "3x de R$ 65,30 sem juros",
-		oldPrice: 250
-	},
-	{
-		id: "flor-02",
-		name: "Arranjo Brilho do Sol (Girassóis)",
-		description: "Lindo arranjo de girassóis vibrantes montado em vaso decorativo para iluminar o dia.",
-		price: 140,
-		category: "buques",
-		categories: [
-			"buques"
-		],
-		image: "/images/produtos/arranjo-girassois.jpg",
-		images: [
-			"/images/produtos/arranjo-girassois.jpg"
-		],
-		featured: true,
-		installments: "3x de R$ 46,66 sem juros"
-	},
-	{
-		id: "cesta-01",
-		name: "Cesta de Café da Manhã Premium",
-		description: "Cesta completa com pães artesanais, frios, suco integral, frutas da estação, caneca exclusiva e arranjo de mini rosas.",
-		price: 325,
-		category: "cestas",
-		categories: [
-			"cestas",
-			"destaques"
-		],
-		image: "/images/produtos/cesta-cafe-premium.jpg",
-		images: [
-			"/images/produtos/cesta-cafe-premium.jpg",
-			"/images/produtos/cesta-cafe-premium-detail.jpg"
-		],
-		featured: true,
-		installments: "3x de R$ 108,33 sem juros"
-	},
-	{
-		id: "cesta-02",
-		name: "Cesta Gostosuras de Chocolate",
-		description: "Cesta recheada com caixa de Ferrero Rocher, bombons finos, cookies e um urso de pelúcia médio.",
-		price: 175,
-		oldPrice: 195,
-		category: "cestas",
-		categories: [
-			"cestas"
-		],
-		image: "/images/produtos/cesta-chocolates.jpg",
-		images: [
-			"/images/produtos/cesta-chocolates.jpg"
-		],
-		featured: false,
-		installments: "3x de R$ 58,33 sem juros"
-	},
-	{
-		id: "pres-01",
-		name: "A Bela Rosa Encantada Vermelha",
-		description: "Rosa importada preservada em cúpula de vidro (durabilidade de até 2 anos) inspirada em contos de fadas.",
-		price: 239.9,
-		category: "presentes",
-		categories: [
-			"presentes",
-			"destaques"
-		],
-		image: "/images/produtos/rosa-encantada.jpg",
-		images: [
-			"/images/produtos/rosa-encantada.jpg",
-			"/images/produtos/rosa-encantada-detail.jpg"
-		],
-		featured: true,
-		installments: "3x de R$ 79,97 sem juros"
-	},
-	{
-		id: "pres-02",
-		name: "Box Love & Vinho",
-		description: "Caixa cartonada premium contendo uma garrafa de vinho tinto, taça personalizada e arranjo de 6 rosas.",
-		price: 295,
-		category: "presentes",
-		categories: [
-			"presentes",
-			"destaques"
-		],
-		image: "/images/produtos/box-vinho-rosas.jpg",
-		images: [
-			"/images/produtos/box-vinho-rosas.jpg"
-		],
-		featured: false,
-		installments: "3x de R$ 98,33 sem juros"
-	},
-	{
-		id: "bromelia-01",
-		name: "Bomelia",
-		description: "Bromélia Linda",
-		price: 352,
-		oldPrice: 529,
-		category: "buques",
-		categories: [
-			"buques",
-			"presentes",
-			"destaques"
-		],
-		image: "/images/produtos/screenshot-from-2026-07-12-16-18-56.png",
-		images: [
-			"/images/produtos/screenshot-from-2026-07-12-16-18-56.png"
-		],
-		featured: true,
-		installments: "3x de 117.34 Sem Juros"
-	}
-];
-
-const products = defineEventHandler(() => {
-  return products$2;
+const products = defineEventHandler(async () => {
+  const client = useSupabase();
+  const { data, error } = await client.from("products").select("*").order("created_at", { ascending: false });
+  if (error) {
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Erro ao buscar produtos no Supabase: ${error.message}`
+    });
+  }
+  return data;
 });
 
 const products$1 = /*#__PURE__*/Object.freeze(/*#__PURE__*/Object.defineProperty({
