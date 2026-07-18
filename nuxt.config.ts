@@ -10,6 +10,7 @@ export default defineNuxtConfig({
         { name: 'description', content: 'Encontre os melhores buquês de rosas, cestas de café da manhã e presentes especiais. Entregamos amor e carinho em forma de flores.' }
       ],
       link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
         { rel: 'icon', type: 'image/png', href: '/favicon.png' },
         { rel: 'shortcut icon', href: '/favicon.ico' }
       ]
