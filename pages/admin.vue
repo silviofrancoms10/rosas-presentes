@@ -19,6 +19,8 @@ async function login() {
     localStorage.setItem('admin_token', res.token)
     await loadProducts()
     await loadCategories()
+    await loadOrders()
+    await loadReports()
   } catch {
     loginError.value = 'Senha incorreta. Tente novamente.'
   } finally {
@@ -31,6 +33,15 @@ function logout() {
   localStorage.removeItem('admin_token')
   products.value = []
   categories.value = []
+  orders.value = []
+  reportsData.value = {
+    statusStats: [],
+    topProducts: [],
+    billingDaily: [],
+    billingWeekly: [],
+    billingMonthly: [],
+    billingYearly: []
+  }
 }
 
 onMounted(() => {
@@ -39,9 +50,173 @@ onMounted(() => {
     token.value = saved
     loadProducts()
     loadCategories()
+    loadOrders()
+    loadReports()
   }
 })
 
+// Helper headers
+function authHeaders() {
+  return { Authorization: `Bearer ${token.value}` }
+}
+
+// ── Orders State & Logic ──────────────────────────────────────────────────────
+const orders = ref<any[]>([])
+const isOrdersLoading = ref(false)
+
+async function loadOrders() {
+  isOrdersLoading.value = true
+  try {
+    orders.value = await $fetch<any[]>('/api/admin/orders', { headers: authHeaders() })
+  } catch (e: any) {
+    console.error('Erro ao carregar pedidos', e)
+  } finally {
+    isOrdersLoading.value = false
+  }
+}
+
+async function updateOrderStatus(orderId: string, newStatus: string) {
+  try {
+    await $fetch('/api/admin/orders', {
+      method: 'PUT',
+      headers: authHeaders(),
+      body: { id: orderId, status: newStatus }
+    })
+    successMsg.value = `Status do pedido atualizado para "${newStatus.toUpperCase()}"!`
+    await loadOrders()
+    await loadReports() // Recarrega os dados do relatório/dashboard
+    setTimeout(() => { successMsg.value = '' }, 3500)
+  } catch (e: any) {
+    alert(e.data?.statusMessage ?? 'Erro ao atualizar status.')
+  }
+}
+
+function getShippingDeadline(createdAtStr: string) {
+  // Ajusta o formato da data caso venha sem "T" do SQLite
+  const normalizedStr = createdAtStr.includes('T') ? createdAtStr : createdAtStr.replace(' ', 'T')
+  const createdAt = new Date(normalizedStr)
+  
+  // O prazo limite é criado_em + 2 dias
+  const deadline = new Date(createdAt.getTime() + 2 * 24 * 60 * 60 * 1000)
+  const now = new Date()
+  
+  const diffTime = deadline.getTime() - now.getTime()
+  const diffHours = Math.ceil(diffTime / (1000 * 60 * 60))
+  
+  const formattedDate = deadline.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+
+  if (diffHours < 0) {
+    return {
+      text: `Atrasado (Limite: ${formattedDate})`,
+      class: 'text-red-600 bg-red-50 border border-red-200'
+    }
+  } else if (diffHours <= 12) {
+    return {
+      text: `Urgente: Envio em até ${diffHours}h (Limite: ${formattedDate})`,
+      class: 'text-amber-700 bg-amber-50 border border-amber-200 font-semibold'
+    }
+  } else {
+    const diffDays = Math.floor(diffHours / 24)
+    const remainingText = diffDays > 0 ? `${diffDays}d restantes` : `${diffHours}h restantes`
+    return {
+      text: `Prazo de envio: ${remainingText} (Limite: ${formattedDate})`,
+      class: 'text-neutral-700 bg-neutral-50 border border-neutral-200'
+    }
+  }
+}
+
+// ── Reports State & Logic ─────────────────────────────────────────────────────
+const reportsData = ref<any>({
+  statusStats: [],
+  topProducts: [],
+  billingDaily: [],
+  billingWeekly: [],
+  billingMonthly: [],
+  billingYearly: []
+})
+const isReportsLoading = ref(false)
+
+const selectedPeriodType = ref<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily')
+const billingYearFilter = ref<string>('Todos')
+const billingMonthFilter = ref<string>('Todos')
+
+async function loadReports() {
+  isReportsLoading.value = true
+  try {
+    reportsData.value = await $fetch<any>('/api/admin/reports', { headers: authHeaders() })
+  } catch (e: any) {
+    console.error('Erro ao carregar relatórios', e)
+  } finally {
+    isReportsLoading.value = false
+  }
+}
+
+const availableYears = computed(() => {
+  const years = new Set<string>()
+  reportsData.value.billingDaily.forEach((d: any) => {
+    if (d.period) {
+      const year = d.period.split('-')[0]
+      years.add(year)
+    }
+  })
+  return Array.from(years).sort((a, b) => b.localeCompare(a))
+})
+
+const monthsList = [
+  { value: '01', label: 'Janeiro' },
+  { value: '02', label: 'Fevereiro' },
+  { value: '03', label: 'Março' },
+  { value: '04', label: 'Abril' },
+  { value: '05', label: 'Maio' },
+  { value: '06', label: 'Junho' },
+  { value: '07', label: 'Julho' },
+  { value: '08', label: 'Agosto' },
+  { value: '09', label: 'Setembro' },
+  { value: '10', label: 'Outubro' },
+  { value: '11', label: 'Novembro' },
+  { value: '12', label: 'Dezembro' }
+]
+
+const filteredBilling = computed(() => {
+  let list = []
+  if (selectedPeriodType.value === 'daily') {
+    list = reportsData.value.billingDaily
+  } else if (selectedPeriodType.value === 'weekly') {
+    list = reportsData.value.billingWeekly
+  } else if (selectedPeriodType.value === 'monthly') {
+    list = reportsData.value.billingMonthly
+  } else {
+    list = reportsData.value.billingYearly
+  }
+
+  return list.filter((item: any) => {
+    if (!item.period) return true
+    
+    // Filter by year
+    if (billingYearFilter.value !== 'Todos') {
+      const year = item.period.split('-')[0]
+      if (year !== billingYearFilter.value) return false
+    }
+
+    // Filter by month
+    if (selectedPeriodType.value === 'daily' && billingMonthFilter.value !== 'Todos') {
+      const month = item.period.split('-')[1] // 'YYYY-MM-DD' -> 'MM'
+      if (month !== billingMonthFilter.value) return false
+    }
+    if (selectedPeriodType.value === 'monthly' && billingMonthFilter.value !== 'Todos') {
+      const month = item.period.split('-')[1] // 'YYYY-MM' -> 'MM'
+      if (month !== billingMonthFilter.value) return false
+    }
+
+    return true
+  })
+})
 
 // ── Products ──────────────────────────────────────────────────────────────────
 const products = ref<any[]>([])
@@ -92,7 +267,7 @@ const form = ref(emptyForm())
 const installmentOption = ref('')
 const editingId = ref<string | null>(null)
 const showForm = ref(false)
-const tab = ref<'products' | 'categories' | 'guide'>('products')
+const tab = ref<'orders' | 'reports' | 'products' | 'categories' | 'guide'>('orders')
 const deleteConfirmId = ref<string | null>(null)
 const successMsg = ref('')
 
@@ -185,10 +360,6 @@ async function saveCategory() {
   }
 }
 
-
-function authHeaders() {
-  return { Authorization: `Bearer ${token.value}` }
-}
 
 async function loadProducts() {
   isLoading.value = true
@@ -498,22 +669,385 @@ function formatPrice(v: number) {
 
       <!-- Tabs -->
       <div class="max-w-6xl mx-auto px-4 pt-6">
-        <div class="flex space-x-2 mb-6">
+        <div class="flex flex-wrap gap-2 mb-6">
+          <button
+            @click="tab = 'orders'"
+            :class="tab === 'orders' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          >Pedidos</button>
+          <button
+            @click="tab = 'reports'"
+            :class="tab === 'reports' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
+          >Relatórios</button>
           <button
             @click="tab = 'products'"
             :class="tab === 'products' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
           >Produtos</button>
           <button
             @click="tab = 'categories'"
             :class="tab === 'categories' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
           >Categorias</button>
           <button
             @click="tab = 'guide'"
             :class="tab === 'guide' ? 'bg-burgundy text-white shadow-md' : 'bg-white text-neutral-600 hover:bg-neutral-50'"
-            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all"
+            class="px-5 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer"
           >Como usar</button>
+        </div>
+
+        <!-- ── Orders Tab ───────────────────────────── -->
+        <div v-if="tab === 'orders'">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-extrabold text-lg text-neutral-800">Gerenciamento de Pedidos</h2>
+            <button
+              @click="loadOrders"
+              class="bg-white border border-neutral-200 text-neutral-700 text-xs font-semibold px-4 py-2 rounded-xl hover:bg-neutral-50 transition-colors flex items-center space-x-1.5 shadow-sm cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2050/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.248 8H18" />
+              </svg>
+              <span>Atualizar</span>
+            </button>
+          </div>
+
+          <div v-if="isOrdersLoading" class="text-center py-16 text-neutral-400">Carregando pedidos...</div>
+          <div v-else-if="orders.length === 0" class="bg-white rounded-2xl border border-neutral-200 p-8 text-center text-neutral-500">
+            Nenhum pedido encontrado.
+          </div>
+          <div v-else class="space-y-6">
+            <div
+              v-for="order in orders"
+              :key="order.id"
+              class="bg-white rounded-3xl border border-neutral-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+            >
+              <!-- Order Header -->
+              <div class="bg-neutral-50 border-b border-neutral-100 px-6 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                <div class="space-y-1">
+                  <div class="flex items-center gap-2">
+                    <span class="font-extrabold text-base text-burgundy font-mono">{{ order.id }}</span>
+                    <span
+                      class="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full"
+                      :class="{
+                        'bg-blue-100 text-blue-700': order.status === 'novo',
+                        'bg-amber-100 text-amber-700': order.status === 'enviado',
+                        'bg-red-100 text-red-700': order.status === 'cancelado',
+                        'bg-green-100 text-green-700': order.status === 'concluido'
+                      }"
+                    >
+                      {{ order.status }}
+                    </span>
+                  </div>
+                  <p class="text-xs text-neutral-505">
+                    Realizado em: {{ new Date(order.created_at.replace(' ', 'T')).toLocaleString('pt-BR') }}
+                  </p>
+                </div>
+
+                <!-- Shipping Deadline (only if status is 'novo') -->
+                <div 
+                  v-if="order.status === 'novo'"
+                  class="px-3.5 py-1.5 rounded-xl text-xs border font-medium flex items-center gap-1.5 animate-pulse"
+                  :class="getShippingDeadline(order.created_at).class"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{{ getShippingDeadline(order.created_at).text }}</span>
+                </div>
+
+                <!-- Status Action Control -->
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="text-xs font-semibold text-neutral-500">Alterar Status:</span>
+                  <div class="inline-flex rounded-xl border border-neutral-200 bg-white p-1 shadow-sm">
+                    <button
+                      v-for="s in ['novo', 'enviado', 'concluido', 'cancelado']"
+                      :key="s"
+                      @click="updateOrderStatus(order.id, s)"
+                      :class="order.status === s ? 'bg-burgundy text-white font-bold' : 'text-neutral-650 hover:bg-neutral-100'"
+                      class="px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer"
+                    >
+                      {{ s === 'novo' ? 'Novo' : s === 'enviado' ? 'Enviado' : s === 'concluido' ? 'Concluído' : 'Cancelado' }}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Order Body (Grid) -->
+              <div class="p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                <!-- Customer & Delivery Details (7 cols) -->
+                <div class="md:col-span-7 space-y-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Comprador</h4>
+                      <p class="text-sm font-bold text-neutral-850">{{ order.customer_name }}</p>
+                      <p class="text-xs text-neutral-500 mt-1">
+                        <a :href="`https://wa.me/55${order.customer_phone.replace(/\D/g, '')}`" target="_blank" class="bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/50 rounded-lg px-2.5 py-1 inline-flex items-center gap-1.5 font-semibold transition-colors">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-3.5 w-3.5 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.731-1.456L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.625 1.45 5.507.003 9.974-4.463 9.977-9.977.002-2.671-1.037-5.183-2.927-7.073-1.89-1.89-4.4-2.93-7.072-2.931-5.51 0-9.98 4.47-9.985 9.983-.001 1.714.47 3.328 1.393 4.723l-.986 3.6 3.69-.968zm11.415-4.83c-.3-.149-1.772-.874-2.046-.973-.274-.1-.474-.149-.673.15-.198.298-.77.973-.943 1.171-.173.198-.347.223-.647.074-.3-.15-1.267-.467-2.414-1.493-.892-.796-1.494-1.78-1.669-2.079-.173-.3-.018-.462.13-.61.134-.133.3-.347.449-.52.149-.173.198-.298.298-.497.1-.2.05-.373-.025-.52-.075-.15-.673-1.62-.922-2.22-.242-.58-.488-.5-.673-.51-.173-.01-.373-.01-.572-.01-.2 0-.52.075-.793.372-.272.298-1.04 1.018-1.04 2.482 0 1.464 1.066 2.879 1.214 3.078.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.772-.724 2.022-1.424.249-.699.249-1.295.173-1.424-.075-.128-.273-.203-.573-.352z"/></svg>
+                          <span>WhatsApp</span>
+                        </a>
+                      </p>
+                    </div>
+                    <div>
+                      <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Destinatário</h4>
+                      <p class="text-sm font-bold text-neutral-850">{{ order.recipient_name }}</p>
+                      <p class="text-xs text-neutral-600 font-medium bg-neutral-100 rounded-lg px-2.5 py-1 mt-1.5 inline-block">
+                        📅 {{ order.delivery_date }} às {{ order.delivery_time || 'Qualquer horário' }}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Endereço de Entrega</h4>
+                    <p class="text-xs text-neutral-700 bg-neutral-50 border border-neutral-200/50 rounded-xl p-3">
+                      {{ order.delivery_address }}
+                    </p>
+                  </div>
+
+                  <div v-if="order.card_message">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-400 mb-1">Mensagem do Cartão</h4>
+                    <div class="text-xs text-burgundy italic bg-burgundy/5 border border-burgundy/10 rounded-xl p-3 relative font-medium">
+                      "{{ order.card_message }}"
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Order Items & Summary (5 cols) -->
+                <div class="md:col-span-5 bg-neutral-50 rounded-2xl p-4 border border-neutral-100 flex flex-col justify-between">
+                  <div class="space-y-3">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-neutral-400 border-b border-neutral-250 pb-1.5">Itens do Pedido</h4>
+                    <div class="space-y-2.5 max-h-[160px] overflow-y-auto pr-1">
+                      <div
+                        v-for="item in order.items"
+                        :key="item.id"
+                        class="flex justify-between items-start text-xs"
+                      >
+                        <div class="min-w-0 flex-grow pr-2">
+                          <p class="font-bold text-neutral-800 truncate text-[11px]">{{ item.product_name }}</p>
+                          <p class="text-[9px] text-neutral-500 mt-0.5">{{ item.quantity }}x de {{ formatPrice(item.price) }}</p>
+                        </div>
+                        <span class="font-extrabold text-neutral-800 flex-shrink-0 text-[11px]">
+                          {{ formatPrice(item.price * item.quantity) }}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="border-t border-neutral-200 pt-3 mt-4 space-y-1.5">
+                    <div class="flex justify-between text-[11px] text-neutral-550 font-medium">
+                      <span>Pagamento:</span>
+                      <span class="uppercase font-bold text-neutral-700">{{ order.payment_method }}</span>
+                    </div>
+                    <div v-if="order.payment_url" class="flex justify-between text-[11px] text-neutral-550 font-medium">
+                      <span>Checkout InfinitePay:</span>
+                      <a :href="order.payment_url" target="_blank" class="text-burgundy hover:underline font-bold">
+                        Link de Pagamento 🔗
+                      </a>
+                    </div>
+                    <div class="flex justify-between text-xs font-black text-burgundy border-t border-dashed border-neutral-300 pt-2">
+                      <span>Total Pago:</span>
+                      <span>{{ formatPrice(order.total_price) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Reports Tab ──────────────────────────── -->
+        <div v-if="tab === 'reports'">
+          <div class="flex items-center justify-between mb-6">
+            <h2 class="font-extrabold text-lg text-neutral-800">Relatórios & Estatísticas</h2>
+            <button
+              @click="loadReports"
+              class="bg-white border border-neutral-200 text-neutral-700 text-xs font-semibold px-4 py-2 rounded-xl hover:bg-neutral-50 transition-colors flex items-center space-x-1.5 shadow-sm cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2050/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.248 8H18" />
+              </svg>
+              <span>Atualizar dados</span>
+            </button>
+          </div>
+
+          <div v-if="isReportsLoading" class="text-center py-16 text-neutral-400">Carregando estatísticas...</div>
+          <div v-else class="space-y-6">
+            
+            <!-- Dashboard Stats Grid -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <!-- Total Revenue -->
+              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
+                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Faturamento Líquido</p>
+                <p class="text-lg font-black text-green-600 mt-1">
+                  {{ formatPrice(reportsData.billingYearly.reduce((acc, curr) => acc + curr.revenue, 0)) }}
+                </p>
+                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Exclui pedidos cancelados</p>
+              </div>
+
+              <!-- Total Orders -->
+              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
+                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Total de Pedidos</p>
+                <p class="text-lg font-black text-burgundy mt-1">
+                  {{ reportsData.statusStats.reduce((acc, curr) => acc + curr.count, 0) }}
+                </p>
+                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Pedidos criados na loja</p>
+              </div>
+
+              <!-- Completed Orders -->
+              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
+                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Pedidos Concluídos</p>
+                <p class="text-lg font-black text-neutral-800 mt-1">
+                  {{ reportsData.statusStats.find(s => s.status === 'concluido')?.count || 0 }}
+                </p>
+                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Entregas bem-sucedidas</p>
+              </div>
+
+              <!-- Pending / New Orders -->
+              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
+                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Pendentes de Envio</p>
+                <p class="text-lg font-black text-amber-600 mt-1">
+                  {{ 
+                    (reportsData.statusStats.find(s => s.status === 'novo')?.count || 0) + 
+                    (reportsData.statusStats.find(s => s.status === 'enviado')?.count || 0) 
+                  }}
+                </p>
+                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Aguardando processamento</p>
+              </div>
+            </div>
+
+            <!-- Two-column Charts/Breakdowns Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+              
+              <!-- Left Column: Faturamento por Período (7 cols) -->
+              <div class="lg:col-span-7 bg-white rounded-3xl border border-neutral-200 p-6 space-y-5 shadow-sm">
+                <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-b border-neutral-100 pb-3">
+                  <div>
+                    <h3 class="font-extrabold text-sm text-neutral-800 uppercase tracking-wide">Faturamento Histórico</h3>
+                    <p class="text-xs text-neutral-400 mt-0.5">Visão de faturamento por períodos</p>
+                  </div>
+                  
+                  <!-- Period select buttons -->
+                  <div class="inline-flex rounded-xl bg-neutral-100 p-1 border border-neutral-200 text-xs">
+                    <button
+                      v-for="p in [
+                        { val: 'daily', lbl: 'Dia' },
+                        { val: 'weekly', lbl: 'Semana' },
+                        { val: 'monthly', lbl: 'Mês' },
+                        { val: 'yearly', lbl: 'Ano' }
+                      ]"
+                      :key="p.val"
+                      @click="selectedPeriodType = p.val; billingYearFilter = 'Todos'; billingMonthFilter = 'Todos'"
+                      :class="selectedPeriodType === p.val ? 'bg-burgundy text-white font-bold' : 'text-neutral-600 hover:bg-neutral-200/50'"
+                      class="px-3.5 py-1.5 rounded-lg font-semibold transition-all cursor-pointer"
+                    >
+                      {{ p.lbl }}
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Filters for years and months -->
+                <div class="grid grid-cols-2 gap-3 bg-neutral-50 border border-neutral-200/60 rounded-2xl p-3">
+                  <div>
+                    <label class="block text-[9px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Filtrar por Ano</label>
+                    <select v-model="billingYearFilter" class="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-burgundy">
+                      <option value="Todos">Todos os Anos</option>
+                      <option v-for="year in availableYears" :key="year" :value="year">{{ year }}</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-[9px] font-bold text-neutral-400 uppercase tracking-wider mb-1">Filtrar por Mês</label>
+                    <select 
+                      v-model="billingMonthFilter" 
+                      :disabled="selectedPeriodType === 'yearly' || selectedPeriodType === 'weekly'" 
+                      class="w-full bg-white border border-neutral-200 rounded-xl px-2.5 py-1.5 text-xs focus:outline-none focus:border-burgundy disabled:opacity-50 disabled:bg-neutral-100 disabled:cursor-not-allowed"
+                    >
+                      <option value="Todos">Todos os Meses</option>
+                      <option v-for="m in monthsList" :key="m.value" :value="m.value">{{ m.label }}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <!-- Billing History List/Table -->
+                <div class="overflow-x-auto">
+                  <table class="w-full text-left text-xs border-collapse">
+                    <thead>
+                      <tr class="border-b border-neutral-200 text-neutral-400 uppercase font-bold tracking-wider text-[10px]">
+                        <th class="pb-3 font-semibold">Período</th>
+                        <th class="pb-3 text-center font-semibold">Qtd Pedidos</th>
+                        <th class="pb-3 text-right font-semibold">Faturamento</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr v-if="filteredBilling.length === 0">
+                        <td colspan="3" class="py-8 text-center text-neutral-405 italic">Nenhum registro para os filtros selecionados.</td>
+                      </tr>
+                      <tr
+                        v-for="row in filteredBilling"
+                        :key="row.period"
+                        class="border-b border-neutral-100 hover:bg-neutral-50/50 transition-colors"
+                      >
+                        <td class="py-2.5 font-bold text-neutral-700">
+                          {{ 
+                            selectedPeriodType === 'monthly' 
+                              ? row.period.split('-')[1] + '/' + row.period.split('-')[0]
+                              : selectedPeriodType === 'daily'
+                                ? new Date(row.period + 'T00:00:00').toLocaleDateString('pt-BR')
+                                : row.period 
+                          }}
+                        </td>
+                        <td class="py-2.5 text-center text-neutral-600 font-semibold">{{ row.count }}</td>
+                        <td class="py-2.5 text-right font-black text-green-600">{{ formatPrice(row.revenue) }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Right Column: Top Products List (5 cols) -->
+              <div class="lg:col-span-5 bg-white rounded-3xl border border-neutral-200 p-6 space-y-5 shadow-sm">
+                <div>
+                  <h3 class="font-extrabold text-sm text-neutral-850 uppercase tracking-wide">Produtos Mais Pedidos</h3>
+                  <p class="text-xs text-neutral-450 mt-0.5">Top 10 produtos mais pedidos no sistema</p>
+                </div>
+
+                <div v-if="reportsData.topProducts.length === 0" class="text-center py-8 text-neutral-405 italic text-xs">
+                  Nenhum produto pedido ainda.
+                </div>
+                <div v-else class="space-y-3.5">
+                  <div
+                    v-for="(product, idx) in reportsData.topProducts"
+                    :key="product.product_id"
+                    class="space-y-1.5"
+                  >
+                    <div class="flex justify-between items-center text-xs">
+                      <div class="flex items-center space-x-2 min-w-0">
+                        <span class="font-bold text-[10px] text-neutral-400 w-4">{{ idx + 1 }}</span>
+                        <span class="font-bold text-neutral-800 truncate text-[11px]">{{ product.product_name }}</span>
+                      </div>
+                      <div class="flex items-center space-x-2 shrink-0">
+                        <span class="text-[9px] bg-burgundy/5 text-burgundy font-bold px-2 py-0.5 rounded-full">
+                          {{ product.total_qty }} un.
+                        </span>
+                        <span class="font-semibold text-neutral-500 text-[11px]">
+                          {{ formatPrice(product.revenue) }}
+                        </span>
+                      </div>
+                    </div>
+                    <!-- Custom progress bar -->
+                    <div class="w-full bg-neutral-100 h-1.5 rounded-full overflow-hidden">
+                      <div
+                        class="bg-burgundy h-full rounded-full transition-all duration-500"
+                        :style="{ 
+                          width: `${(product.total_qty / reportsData.topProducts[0].total_qty) * 100}%` 
+                        }"
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
         </div>
 
         <!-- ── Products Tab ─────────────────────────── -->

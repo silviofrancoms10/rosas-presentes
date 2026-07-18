@@ -20,3 +20,32 @@ CREATE TABLE IF NOT EXISTS products (
   installments TEXT,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Tabela de Pedidos
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  customer_name TEXT NOT NULL,
+  customer_phone TEXT NOT NULL,
+  recipient_name TEXT NOT NULL,
+  delivery_address TEXT NOT NULL,
+  delivery_date TEXT NOT NULL,
+  delivery_time TEXT,
+  card_message TEXT,
+  payment_method TEXT NOT NULL,
+  total_price REAL NOT NULL,
+  status TEXT DEFAULT 'novo', -- 'novo', 'enviado', 'cancelado', 'concluido'
+  payment_url TEXT,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Tabela de Itens do Pedido
+CREATE TABLE IF NOT EXISTS order_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  order_id TEXT NOT NULL,
+  product_id TEXT NOT NULL,
+  product_name TEXT NOT NULL,
+  price REAL NOT NULL,
+  quantity INTEGER NOT NULL,
+  FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE CASCADE
+);
+

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useCartStore } from '~/stores/cartStore'
 
 const router = useRouter()
@@ -140,23 +140,80 @@ function getFirstImage(product: any): string {
   return product.image
 }
 
-function handleCheckoutSubmit() {
+async function handleCheckoutSubmit() {
   if (cartStore.items.length === 0) return
 
-  // Mock ordering process
-  orderNumber.value = 'RP-' + Math.floor(100000 + Math.random() * 900000)
-  
-  // Clear the cart
-  cartStore.clearCart()
-  
-  // Show success view
-  isSubmitted.value = true
+  try {
+    const finalPrice = paymentMethod.value === 'pix' ? cartStore.cartTotal * 0.95 : cartStore.cartTotal
+
+    const orderBody = {
+      customerName: customerName.value,
+      customerPhone: customerPhone.value,
+      recipientName: recipientName.value,
+      deliveryAddress: deliveryAddress.value,
+      deliveryDate: deliveryDate.value,
+      deliveryTime: deliveryTime.value,
+      cardMessage: cardMessage.value,
+      paymentMethod: paymentMethod.value,
+      totalPrice: finalPrice,
+      items: cartStore.items.map((item: any) => ({
+        product: {
+          id: item.product.id,
+          name: item.product.name,
+          price: item.product.price
+        },
+        quantity: item.quantity
+      }))
+    }
+
+    const response = await $fetch<{ ok: boolean; orderId: string; paymentUrl?: string }>('/api/orders', {
+      method: 'POST',
+      body: orderBody
+    })
+
+    if (response && response.ok) {
+      // Clear the cart
+      cartStore.clearCart()
+      
+      if (response.paymentUrl) {
+        // Redireciona para o checkout seguro da InfinitePay
+        window.location.href = response.paymentUrl
+      } else {
+        // Fallback local se não houver URL de pagamento
+        orderNumber.value = response.orderId
+        isSubmitted.value = true
+      }
+    }
+  } catch (err: any) {
+    console.error('Erro no checkout:', err)
+    alert(err.data?.statusMessage || 'Erro ao processar o pedido. Tente novamente.')
+  }
 }
 
 function goBackHome() {
   router.push('/')
 }
 
+const route = useRoute()
+
+onMounted(async () => {
+  // Se estiver retornando do redirecionamento da InfinitePay após o sucesso
+  if (route.query.success === 'true' && route.query.order_id) {
+    const orderId = route.query.order_id as string
+    try {
+      const orderData = await $fetch<{ id: string; deliveryDate: string; deliveryTime: string }>(`/api/orders?id=${orderId}`)
+      if (orderData) {
+        orderNumber.value = orderData.id
+        deliveryDate.value = orderData.deliveryDate
+        deliveryTime.value = orderData.deliveryTime
+        isSubmitted.value = true
+        cartStore.clearCart()
+      }
+    } catch (err) {
+      console.error('Erro ao buscar dados do pedido:', err)
+    }
+  }
+})
 
 </script>
 
@@ -428,49 +485,12 @@ function goBackHome() {
                   </p>
                 </div>
 
-                <!-- Credit Card fields -->
-                <div v-if="paymentMethod === 'card'" class="space-y-3 pt-2">
-                  <div>
-                    <label for="card-num" class="form-label">Número do Cartão</label>
-                    <input 
-                      id="card-num" 
-                      v-model="cardNumber" 
-                      type="text" 
-                      required 
-                      placeholder="0000 0000 0000 0000" 
-                      class="form-input"
-                      @invalid="setCustomValidityBR"
-                      @input="clearCustomValidity"
-                    />
-                  </div>
-                  <div class="grid grid-cols-2 gap-3">
-                    <div>
-                      <label for="expiry" class="form-label">Validade</label>
-                      <input 
-                        id="expiry" 
-                        v-model="cardExpiry" 
-                        type="text" 
-                        required 
-                        placeholder="MM/AA" 
-                        class="form-input"
-                        @invalid="setCustomValidityBR"
-                        @input="clearCustomValidity"
-                      />
-                    </div>
-                    <div>
-                      <label for="cvv" class="form-label">CVV</label>
-                      <input 
-                        id="cvv" 
-                        v-model="cardCvv" 
-                        type="text" 
-                        required 
-                        placeholder="000" 
-                        class="form-input"
-                        @invalid="setCustomValidityBR"
-                        @input="clearCustomValidity"
-                      />
-                    </div>
-                  </div>
+                <!-- Credit Card details -->
+                <div v-if="paymentMethod === 'card'" class="p-4 bg-white/40 rounded-xl border border-dashed border-burgundy/20 text-center space-y-2">
+                  <p class="text-xs text-neutral-600">
+                    O pagamento será processado de forma segura na InfinitePay.
+                    Suporta parcelamento em até 12x!
+                  </p>
                 </div>
               </div>
 
