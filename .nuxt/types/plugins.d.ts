@@ -10,27 +10,20 @@ type NuxtAppInjections =
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/revive-payload.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/head/runtime/plugins/unhead.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/pages/runtime/plugins/router.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/browser-devtools-timing.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/payload.client.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/dev-server-logs.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/navigation-repaint.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/check-outdated-build.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/revive-payload.server.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/chunk-reload.client.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/@pinia+nuxt@0.11.3_magicast@0.5.3_pinia@3.0.4_typescript@7.0.2_vue@3.5.39_typescript@7.0.2__/node_modules/@pinia/nuxt/dist/runtime/plugin.vue3.js")> &
   InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/pages/runtime/plugins/prefetch.client.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/pages/runtime/plugins/check-if-page-unused.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@8.1.4_@types+node@26.1.1_esbuild@0.28.1_jiti@2.7.0_terser@5.4_f916916bfd69f4188e9a84a8100f5129/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.server.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/@nuxt+devtools@3.2.4_vite@8.1.4_@types+node@26.1.1_esbuild@0.28.1_jiti@2.7.0_terser@5.4_f916916bfd69f4188e9a84a8100f5129/node_modules/@nuxt/devtools/dist/runtime/plugins/devtools.client.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/warn.dev.server.js")> &
-  InjectionType<typeof import("../../node_modules/.pnpm/nuxt@4.4.8_@babel+plugin-proposal-decorators@7.29.7_@babel+core@7.29.7__@babel+plugin-s_f94ab86709d6e3928d3b183175bb516e/node_modules/nuxt/dist/app/plugins/check-if-layout-used.js")> &
   InjectionType<typeof import("../../plugins/cart-persist.client")>
 
 declare module '#app' {
   interface NuxtApp extends NuxtAppInjections { }
 
   interface NuxtAppLiterals {
-    pluginName: 'vue-devtools-client' | 'nuxt:revive-payload:client' | 'nuxt:head' | 'nuxt:router' | 'nuxt:browser-devtools-timing' | 'nuxt:payload' | 'nuxt:revive-payload:server' | 'nuxt:chunk-reload' | 'pinia' | 'nuxt:global-components' | 'nuxt:prefetch' | 'nuxt:checkIfPageUnused' | 'nuxt:checkIfLayoutUsed'
+    pluginName: 'nuxt:revive-payload:client' | 'nuxt:head' | 'nuxt:router' | 'nuxt:payload' | 'nuxt:revive-payload:server' | 'nuxt:chunk-reload' | 'pinia' | 'nuxt:global-components' | 'nuxt:prefetch'
   }
 }
 

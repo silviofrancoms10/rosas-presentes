@@ -3,7 +3,7 @@ import { useDB } from '~/server/utils/cloudflare'
 export default defineEventHandler(async (event) => {
   try {
     const db = useDB(event)
-    const { results } = await db.prepare('SELECT * FROM categories ORDER BY id ASC').all()
+    const { results } = await db.prepare("SELECT * FROM categories ORDER BY CASE WHEN id = 'todos' THEN 0 ELSE 1 END, id ASC").all()
     return results || []
   } catch {
     // Retorna as categorias estáticas como fallback caso a tabela não tenha sido criada/configurada ainda
