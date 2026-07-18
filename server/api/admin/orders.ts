@@ -52,7 +52,7 @@ export default defineEventHandler(async (event) => {
       throw createError({ statusCode: 400, statusMessage: 'id e status são obrigatórios' })
     }
 
-    const allowedStatuses = ['novo', 'enviado', 'cancelado', 'concluido']
+    const allowedStatuses = ['pendente', 'novo', 'enviado', 'cancelado', 'concluido']
     if (!allowedStatuses.includes(status)) {
       throw createError({ statusCode: 400, statusMessage: 'Status inválido' })
     }

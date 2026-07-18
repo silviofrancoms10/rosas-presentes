@@ -25,63 +25,65 @@ export default defineEventHandler(async (event) => {
       GROUP BY status
     `).all()
 
-    // 2. Produtos mais pedidos (Top 10)
+    // 2. Produtos mais pedidos (Top 10 - excluindo cancelados e pendentes)
     const { results: topProducts } = await db.prepare(`
       SELECT 
-        product_id, 
-        product_name, 
-        SUM(quantity) as total_qty, 
-        SUM(quantity * price) as revenue 
-      FROM order_items 
-      GROUP BY product_id, product_name 
+        oi.product_id, 
+        oi.product_name, 
+        SUM(oi.quantity) as total_qty, 
+        SUM(oi.quantity * oi.price) as revenue 
+      FROM order_items oi
+      JOIN orders o ON oi.order_id = o.id
+      WHERE o.status NOT IN ('cancelado', 'pendente')
+      GROUP BY oi.product_id, oi.product_name 
       ORDER BY total_qty DESC 
       LIMIT 10
     `).all()
 
-    // 3. Faturamento por Dia (excluindo cancelados)
+    // 3. Faturamento por Dia (excluindo cancelados e pendentes)
     const { results: billingDaily } = await db.prepare(`
       SELECT 
         date(created_at) as period, 
         SUM(total_price) as revenue, 
         COUNT(*) as count 
       FROM orders 
-      WHERE status != 'cancelado' 
+      WHERE status NOT IN ('cancelado', 'pendente') 
       GROUP BY period 
       ORDER BY period DESC
     `).all()
 
-    // 4. Faturamento por Semana (excluindo cancelados)
+    // 4. Faturamento por Semana (excluindo cancelados e pendentes)
     const { results: billingWeekly } = await db.prepare(`
       SELECT 
         strftime('%Y-W%W', created_at) as period, 
         SUM(total_price) as revenue, 
         COUNT(*) as count 
       FROM orders 
-      WHERE status != 'cancelado' 
+      WHERE status NOT IN ('cancelado', 'pendente') 
       GROUP BY period 
       ORDER BY period DESC
     `).all()
 
-    // 5. Faturamento por Mês (excluindo cancelados)
+    // 5. Faturamento por Mês (excluindo cancelados e pendentes)
     const { results: billingMonthly } = await db.prepare(`
       SELECT 
         strftime('%Y-%m', created_at) as period, 
         SUM(total_price) as revenue, 
         COUNT(*) as count 
       FROM orders 
-      WHERE status != 'cancelado' 
+      WHERE status NOT IN ('cancelado', 'pendente') 
       GROUP BY period 
       ORDER BY period DESC
     `).all()
 
-    // 6. Faturamento por Ano (excluindo cancelados)
+    // 6. Faturamento por Ano (excluindo cancelados e pendentes)
     const { results: billingYearly } = await db.prepare(`
       SELECT 
         strftime('%Y', created_at) as period, 
         SUM(total_price) as revenue, 
         COUNT(*) as count 
       FROM orders 
-      WHERE status != 'cancelado' 
+      WHERE status NOT IN ('cancelado', 'pendente') 
       GROUP BY period 
       ORDER BY period DESC
     `).all()

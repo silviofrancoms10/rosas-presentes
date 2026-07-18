@@ -69,6 +69,7 @@ export default defineEventHandler(async (event) => {
       const host = headers.host || 'localhost:3000'
       const protocol = headers['x-forwarded-proto'] || 'http'
       const redirectUrl = `${protocol}://${host}/checkout?success=true&order_id=${orderId}`
+      const webhookUrl = `${protocol}://${host}/api/webhooks/infinitepay`
 
       // 3. Define multiplicador de desconto (PIX tem 5% de desconto)
       const discountMultiplier = paymentMethod === 'pix' ? 0.95 : 1.0
@@ -77,6 +78,7 @@ export default defineEventHandler(async (event) => {
       const infinitePayPayload = {
         handle: 'silvio-augusto-46j',
         redirect_url: redirectUrl,
+        webhook_url: webhookUrl,
         order_nsu: orderId,
         amount: Math.round(Number(totalPrice) * 100), // Preço total em centavos
         items: items.map((item: any) => ({
@@ -119,7 +121,7 @@ export default defineEventHandler(async (event) => {
         INSERT INTO orders (
           id, customer_name, customer_phone, recipient_name, delivery_address,
           delivery_date, delivery_time, card_message, payment_method, total_price, status, payment_url
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'novo', ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendente', ?)
       `).bind(
         orderId,
         customerName,

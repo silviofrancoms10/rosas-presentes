@@ -25,8 +25,9 @@ const emit = defineEmits(['toggle-cart'])
   <header class="header-glass">
     <div class="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
       <!-- Logo -->
-      <div class="flex items-center space-x-2 cursor-pointer" @click="router.push('/')">
-        <span class="text-xl md:text-2xl font-bold tracking-tight">🌹 Rosas Presentes</span>
+      <div class="flex items-center space-x-2.5 cursor-pointer" @click="router.push('/')">
+        <img src="/favicon.png" alt="Rosas Presentes Logo" class="h-7 w-7 rounded-lg object-cover shadow-sm border border-white/20" />
+        <span class="text-xl md:text-2xl font-bold tracking-tight">Rosas Presentes</span>
       </div>
 
       <!-- Desktop Navigation Menu -->

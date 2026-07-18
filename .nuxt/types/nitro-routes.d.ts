@@ -12,8 +12,14 @@ declare module "nitropack/types" {
     '/api/admin/login': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/admin/login').default>>>>
     }
+    '/api/admin/orders': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/admin/orders').default>>>>
+    }
     '/api/admin/products': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/admin/products').default>>>>
+    }
+    '/api/admin/reports': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/admin/reports').default>>>>
     }
     '/api/admin/upload': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/admin/upload').default>>>>
@@ -21,8 +27,14 @@ declare module "nitropack/types" {
     '/api/categories': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/categories').default>>>>
     }
+    '/api/orders': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/orders').default>>>>
+    }
     '/api/products': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/products').default>>>>
+    }
+    '/api/webhooks/infinitepay': {
+      'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../server/api/webhooks/infinitepay').default>>>>
     }
     '/__nuxt_error': {
       'default': Simplify<Serialize<Awaited<ReturnType<typeof import('../../node_modules/.pnpm/@nuxt+nitro-server@4.4.8_019ec01b8e16a9d8ee1af529f78c6768/node_modules/@nuxt/nitro-server/dist/runtime/handlers/renderer').default>>>>

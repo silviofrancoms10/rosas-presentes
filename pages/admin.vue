@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue'
 
+useHead({
+  title: 'Painel Administrativo | Rosas Presentes'
+})
+
 // ── Auth ──────────────────────────────────────────────────────────────────────
 const token = ref('')
 const password = ref('')
@@ -728,15 +732,16 @@ function formatPrice(v: number) {
                   <div class="flex items-center gap-2">
                     <span class="font-extrabold text-base text-burgundy font-mono">{{ order.id }}</span>
                     <span
-                      class="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full"
+                      class="text-[10px] uppercase tracking-wider font-extrabold px-2 py-0.5 rounded-full border"
                       :class="{
-                        'bg-blue-100 text-blue-700': order.status === 'novo',
-                        'bg-amber-100 text-amber-700': order.status === 'enviado',
-                        'bg-red-100 text-red-700': order.status === 'cancelado',
-                        'bg-green-100 text-green-700': order.status === 'concluido'
+                        'bg-yellow-50 text-yellow-700 border-yellow-200': order.status === 'pendente',
+                        'bg-blue-50 text-blue-700 border-blue-200': order.status === 'novo',
+                        'bg-amber-50 text-amber-700 border-amber-200': order.status === 'enviado',
+                        'bg-red-50 text-red-700 border-red-200': order.status === 'cancelado',
+                        'bg-green-50 text-green-700 border-green-200': order.status === 'concluido'
                       }"
                     >
-                      {{ order.status }}
+                      {{ order.status === 'pendente' ? 'Aguardando Pagamento' : order.status === 'novo' ? 'Pago' : order.status === 'enviado' ? 'Enviado' : order.status === 'concluido' ? 'Concluído' : order.status === 'cancelado' ? 'Cancelado' : order.status }}
                     </span>
                   </div>
                   <p class="text-xs text-neutral-505">
@@ -744,7 +749,7 @@ function formatPrice(v: number) {
                   </p>
                 </div>
 
-                <!-- Shipping Deadline (only if status is 'novo') -->
+                <!-- Shipping Deadline / Payment status alert -->
                 <div 
                   v-if="order.status === 'novo'"
                   class="px-3.5 py-1.5 rounded-xl text-xs border font-medium flex items-center gap-1.5 animate-pulse"
@@ -755,19 +760,29 @@ function formatPrice(v: number) {
                   </svg>
                   <span>{{ getShippingDeadline(order.created_at).text }}</span>
                 </div>
+                
+                <div 
+                  v-else-if="order.status === 'pendente'"
+                  class="px-3.5 py-1.5 rounded-xl text-xs border font-medium flex items-center gap-1.5 bg-yellow-50 border-yellow-250 text-yellow-800 animate-pulse"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span class="font-bold">Aguardando Pagamento</span>
+                </div>
 
                 <!-- Status Action Control -->
                 <div class="flex flex-wrap items-center gap-2">
                   <span class="text-xs font-semibold text-neutral-500">Alterar Status:</span>
-                  <div class="inline-flex rounded-xl border border-neutral-200 bg-white p-1 shadow-sm">
+                  <div class="inline-flex flex-wrap rounded-xl border border-neutral-200 bg-white p-1 shadow-sm gap-0.5">
                     <button
-                      v-for="s in ['novo', 'enviado', 'concluido', 'cancelado']"
+                      v-for="s in ['pendente', 'novo', 'enviado', 'concluido', 'cancelado']"
                       :key="s"
                       @click="updateOrderStatus(order.id, s)"
                       :class="order.status === s ? 'bg-burgundy text-white font-bold' : 'text-neutral-650 hover:bg-neutral-100'"
-                      class="px-3 py-1.5 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer"
+                      class="px-2.5 py-1.5 rounded-lg text-[10px] uppercase font-bold transition-all cursor-pointer"
                     >
-                      {{ s === 'novo' ? 'Novo' : s === 'enviado' ? 'Enviado' : s === 'concluido' ? 'Concluído' : 'Cancelado' }}
+                      {{ s === 'pendente' ? 'Pendente' : s === 'novo' ? 'Pago' : s === 'enviado' ? 'Enviado' : s === 'concluido' ? 'Concluído' : 'Cancelado' }}
                     </button>
                   </div>
                 </div>
@@ -874,44 +889,97 @@ function formatPrice(v: number) {
           <div v-else class="space-y-6">
             
             <!-- Dashboard Stats Grid -->
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <!-- Dashboard Stats Grid -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-4">
               <!-- Total Revenue -->
-              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
-                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Faturamento Líquido</p>
-                <p class="text-lg font-black text-green-600 mt-1">
-                  {{ formatPrice(reportsData.billingYearly.reduce((acc, curr) => acc + curr.revenue, 0)) }}
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-green-600 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Faturamento Líquido</p>
+                  <p class="text-base font-black text-green-600 mt-1 font-mono leading-tight">
+                    {{ formatPrice(reportsData.billingYearly.reduce((acc, curr) => acc + curr.revenue, 0)) }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium">
+                  {{ reportsData.billingYearly.reduce((acc, curr) => acc + curr.count, 0) }} pedidos pagos
                 </p>
-                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Exclui pedidos cancelados</p>
               </div>
 
               <!-- Total Orders -->
-              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
-                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Total de Pedidos</p>
-                <p class="text-lg font-black text-burgundy mt-1">
-                  {{ reportsData.statusStats.reduce((acc, curr) => acc + curr.count, 0) }}
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-neutral-500 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Total de Pedidos</p>
+                  <p class="text-base font-black text-neutral-800 mt-1 font-mono leading-tight">
+                    {{ reportsData.statusStats.reduce((acc, curr) => acc + curr.count, 0) }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium">
+                  Bruto: {{ formatPrice(reportsData.statusStats.reduce((acc, curr) => acc + curr.total_amount, 0)) }}
                 </p>
-                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Pedidos criados na loja</p>
+              </div>
+
+              <!-- Awaiting Payment -->
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-yellow-500 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Pendente</p>
+                  <p class="text-base font-black text-yellow-650 mt-1 font-mono leading-tight animate-pulse">
+                    {{ reportsData.statusStats.find(s => s.status === 'pendente')?.count || 0 }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium font-mono">
+                  {{ formatPrice(reportsData.statusStats.find(s => s.status === 'pendente')?.total_amount || 0) }}
+                </p>
+              </div>
+
+              <!-- Awaiting Shipping -->
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-blue-500 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider font-semibold">Pago (Aguardando Envio)</p>
+                  <p class="text-base font-black text-blue-600 mt-1 font-mono leading-tight">
+                    {{ reportsData.statusStats.find(s => s.status === 'novo')?.count || 0 }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium font-mono">
+                  {{ formatPrice(reportsData.statusStats.find(s => s.status === 'novo')?.total_amount || 0) }}
+                </p>
+              </div>
+
+              <!-- Sent Orders -->
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-amber-500 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Enviado</p>
+                  <p class="text-base font-black text-amber-600 mt-1 font-mono leading-tight">
+                    {{ reportsData.statusStats.find(s => s.status === 'enviado')?.count || 0 }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium font-mono">
+                  {{ formatPrice(reportsData.statusStats.find(s => s.status === 'enviado')?.total_amount || 0) }}
+                </p>
               </div>
 
               <!-- Completed Orders -->
-              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
-                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Pedidos Concluídos</p>
-                <p class="text-lg font-black text-neutral-800 mt-1">
-                  {{ reportsData.statusStats.find(s => s.status === 'concluido')?.count || 0 }}
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-green-700 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Concluído</p>
+                  <p class="text-base font-black text-green-700 mt-1 font-mono leading-tight">
+                    {{ reportsData.statusStats.find(s => s.status === 'concluido')?.count || 0 }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium font-mono">
+                  {{ formatPrice(reportsData.statusStats.find(s => s.status === 'concluido')?.total_amount || 0) }}
                 </p>
-                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Entregas bem-sucedidas</p>
               </div>
 
-              <!-- Pending / New Orders -->
-              <div class="bg-white rounded-2xl p-5 border border-neutral-200 shadow-sm">
-                <p class="text-[10px] text-neutral-400 font-bold uppercase tracking-wider">Pendentes de Envio</p>
-                <p class="text-lg font-black text-amber-600 mt-1">
-                  {{ 
-                    (reportsData.statusStats.find(s => s.status === 'novo')?.count || 0) + 
-                    (reportsData.statusStats.find(s => s.status === 'enviado')?.count || 0) 
-                  }}
+              <!-- Cancelled Orders -->
+              <div class="bg-white rounded-2xl p-4 border border-neutral-200 border-l-4 border-l-red-500 shadow-sm flex flex-col justify-between">
+                <div>
+                  <p class="text-[9px] text-neutral-400 font-bold uppercase tracking-wider">Cancelado</p>
+                  <p class="text-base font-black text-red-600 mt-1 font-mono leading-tight">
+                    {{ reportsData.statusStats.find(s => s.status === 'cancelado')?.count || 0 }}
+                  </p>
+                </div>
+                <p class="text-[9px] text-neutral-500 mt-2 font-medium font-mono">
+                  {{ formatPrice(reportsData.statusStats.find(s => s.status === 'cancelado')?.total_amount || 0) }}
                 </p>
-                <p class="text-[9px] text-neutral-400 mt-1 leading-tight">Aguardando processamento</p>
               </div>
             </div>
 
@@ -1171,41 +1239,75 @@ function formatPrice(v: number) {
 
         <!-- ── Guide Tab ─────────────────────────────── -->
         <div v-if="tab === 'guide'" class="bg-white rounded-2xl border border-neutral-200 p-6 space-y-6 shadow-sm mb-8">
-          <h2 class="font-extrabold text-lg text-burgundy border-b border-burgundy/10 pb-3">Como usar o Painel Admin</h2>
+          <h2 class="font-extrabold text-lg text-burgundy border-b border-burgundy/10 pb-3">Guia de Operação do Painel Administrativo</h2>
           <div class="space-y-6 text-sm text-neutral-700 leading-relaxed">
+            
             <div>
-              <h3 class="font-bold text-neutral-800 mb-1">📦 Gerenciamento de Produtos</h3>
-              <p class="mb-2">Você pode listar, adicionar, editar e excluir produtos do catálogo. Os dados são armazenados diretamente no banco de dados <strong>Cloudflare D1</strong>.</p>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Gerenciamento de Pedidos</h3>
+              <p class="mb-2">Esta seção permite o acompanhamento em tempo real das vendas realizadas na plataforma:</p>
               <ul class="list-disc pl-5 space-y-1 text-xs">
-                <li><strong>Novo Produto:</strong> Clique em "Novo Produto", insira um ID único (ex: <code class="bg-neutral-100 px-1 py-0.5 rounded font-mono">buque-rosas-premium</code>) que não poderá ser alterado depois.</li>
-                <li><strong>Preços:</strong> Preencha o preço atual e, opcionalmente, o preço antigo (para exibir descontos e valor riscado).</li>
-                <li><strong>Banners (Destaques):</strong> Ative a opção "Destaque (Banner)" para exibir o produto no carrossel rotativo da página inicial.</li>
-                <li><strong>Associação de Categorias:</strong> Vincule o produto a uma ou mais categorias no formulário.</li>
+                <li><strong>Listagem de Pedidos:</strong> Todos os pedidos são apresentados de forma cronológica decrescente, contendo dados completos do comprador, destinatário, endereço de entrega, mensagem para o cartão, itens selecionados e método de pagamento.</li>
+                <li><strong>Status do Pedido:</strong> O fluxo do pedido segue os status: Pendente (aguardando pagamento), Pago (confirmado, pronto para preparação), Enviado (em trânsito), Concluído (entregue) e Cancelado. O status pode ser alterado manualmente a qualquer momento.</li>
+                <li><strong>Link de Pagamento:</strong> Caso um pedido esteja pendente, é possível visualizar e compartilhar diretamente o link de checkout seguro gerado na InfinitePay.</li>
               </ul>
             </div>
+
             <div>
-              <h3 class="font-bold text-neutral-800 mb-1">🏷️ Edição de Categorias</h3>
-              <p>Na aba <strong>Categorias</strong>, você pode atualizar o nome de exibição e a imagem de capa de cada categoria cadastrada. Quando você altera a imagem de uma categoria, o sistema remove automaticamente a imagem antiga do Cloudflare R2 para liberar espaço.</p>
-            </div>
-            <div>
-              <h3 class="font-bold text-neutral-800 mb-1">🖼️ Upload de Imagens (Cloudflare R2)</h3>
-              <p class="mb-2">Não é necessário adicionar imagens manualmente no código do projeto! O painel possui upload integrado conectado diretamente ao storage do <strong>Cloudflare R2</strong>.</p>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Painel de Relatórios e Estatísticas</h3>
+              <p class="mb-2">Aba dedicada à análise de métricas financeiras e de volume de vendas:</p>
               <ul class="list-disc pl-5 space-y-1 text-xs">
-                <li>Formatos suportados: <strong>PNG, JPG e JPEG</strong> de até 5MB.</li>
-                <li><strong>Compressão Automática:</strong> Se você enviar uma imagem muito pesada (maior que 1.1MB), o painel reduzirá suas dimensões (máximo 2560px de largura) e fará a compressão no seu navegador antes do envio. Isso melhora a velocidade de carregamento do site.</li>
-                <li><strong>Caminho Manual (Fallback):</strong> Caso queira usar um arquivo local da aplicação, você ainda pode digitar o caminho manual (ex: <code class="bg-neutral-100 px-1 py-0.5 rounded font-mono">/images/produtos/nome.webp</code>).</li>
+                <li><strong>Indicadores Financeiros:</strong> Apresenta o faturamento líquido (soma de pedidos pagos, excluindo pendentes e cancelados) e o faturamento bruto agrupado por cada status de pedido.</li>
+                <li><strong>Faturamento Histórico:</strong> Permite filtrar e visualizar o faturamento consolidado por dia, semana, mês ou ano, com suporte a filtros adicionais por ano e mês específicos.</li>
+                <li><strong>Produtos Mais Pedidos:</strong> Exibe a listagem dos 10 produtos de maior saída no sistema, calculada apenas sobre pedidos confirmados (pagos, enviados ou concluídos).</li>
               </ul>
             </div>
+
+            <div>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Integração de Pagamentos e Webhooks (InfinitePay)</h3>
+              <p class="mb-2">O sistema operacional possui integração direta com o Checkout da InfinitePay para conciliação automatizada:</p>
+              <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li><strong>Fluxo de Criação:</strong> Ao finalizar a compra, o pedido é inserido no banco de dados com o status "Pendente" e o link de pagamento é gerado na InfinitePay.</li>
+                <li><strong>Retorno de Callback (Webhook):</strong> O servidor disponibiliza um endpoint público que recebe as notificações em tempo real da InfinitePay. Quando um pagamento é aprovado, o status do pedido correspondente é atualizado automaticamente para "Pago" (status "novo") no painel. Caso o pagamento falhe ou expire, o status é alterado para "Cancelado".</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Gerenciamento do Catálogo de Produtos</h3>
+              <p class="mb-2">Permite a administração dos produtos visíveis para os clientes finais:</p>
+              <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li><strong>Inclusão e Edição:</strong> Permite definir o ID único (não alterável após a criação), nome, descrição, preço atual e preço antigo (para exibição de descontos promocionais).</li>
+                <li><strong>Opção de Destaque (Banner):</strong> Ao marcar um produto como "Destaque (Banner)", ele será inserido no carrossel promocional da página inicial.</li>
+                <li><strong>Vínculo de Categorias:</strong> O produto pode ser associado a uma ou mais categorias do menu para facilitar a filtragem pelo cliente.</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Gerenciamento de Categorias</h3>
+              <p class="mb-1">Permite alterar o nome de exibição e a imagem de capa das categorias da loja. Para otimização de armazenamento, ao atualizar a imagem de uma categoria, o arquivo anteriormente hospedado no Cloudflare R2 é removido de forma automática.</p>
+            </div>
+
+            <div>
+              <h3 class="font-bold text-neutral-800 mb-1.5">Armazenamento e Otimização de Imagens (Cloudflare R2)</h3>
+              <p class="mb-2">O painel conta com um sistema de upload direto conectado ao Cloudflare R2:</p>
+              <ul class="list-disc pl-5 space-y-1 text-xs">
+                <li><strong>Requisitos de Arquivo:</strong> Suporta formatos PNG, JPG e JPEG com tamanho máximo de 5MB por imagem.</li>
+                <li><strong>Redimensionamento e Compressão:</strong> Imagens com tamanho superior a 1,1MB são automaticamente redimensionadas e comprimidas no próprio navegador antes do envio. Isso otimiza o armazenamento e garante que o site carregue rapidamente para o cliente final.</li>
+                <li><strong>Inserção Manual:</strong> Caso prefira utilizar uma imagem local contida na estrutura do projeto, é possível digitar o caminho relativo manualmente (exemplo: <code class="bg-neutral-100 px-1 py-0.5 rounded font-mono">/images/produtos/nome.webp</code>).</li>
+              </ul>
+            </div>
+
             <div class="bg-amber-50 border border-amber-200 rounded-xl p-4">
-              <h3 class="font-bold text-amber-800 mb-1">🔐 Segurança e Deploy</h3>
-              <p class="text-amber-700 text-xs mb-2">O acesso ao painel admin requer autenticação via token Bearer. A senha é configurada na variável de ambiente <code class="bg-amber-100 px-1 rounded font-mono">ADMIN_SECRET</code>.</p>
-              <p class="text-amber-700 text-xs">Certifique-se de configurar as seguintes variáveis no seu ambiente de produção (Cloudflare Pages/Workers) ou no seu arquivo local <code class="bg-amber-100 px-1 rounded font-mono">.env</code>:</p>
-              <ul class="list-disc pl-5 mt-1 text-[11px] text-amber-700 space-y-0.5 font-mono">
-                <li>ADMIN_SECRET: Senha de acesso ao painel admin.</li>
-                <li>R2_PUBLIC_URL: URL pública do bucket R2 (ex: https://pub-xxx.r2.dev).</li>
-                <li>Bindings ativos: "DB" (Cloudflare D1) e "BUCKET" (Cloudflare R2).</li>
+              <h3 class="font-bold text-amber-800 mb-1.5">Segurança, Deploy e Infraestrutura</h3>
+              <p class="text-amber-700 text-xs mb-2">A autenticação do painel é realizada através de um token de segurança gerido no cabeçalho Authorization (Bearer token), validado contra a senha configurada no servidor.</p>
+              <p class="text-amber-700 text-xs">Para o correto funcionamento em ambiente de produção (Cloudflare Pages), as seguintes configurações e variáveis devem estar presentes no arquivo de ambiente (.env) ou no painel de controle da Cloudflare:</p>
+              <ul class="list-disc pl-5 mt-1 text-[11px] text-amber-700 space-y-1 font-mono">
+                <li>ADMIN_SECRET: Senha de autenticação do painel administrativo.</li>
+                <li>R2_PUBLIC_URL: Endereço público de leitura do bucket Cloudflare R2 (ex: https://pub-xxx.r2.dev).</li>
+                <li>D1 Database (Binding "DB"): Banco de dados relacional para persistência de dados.</li>
+                <li>R2 Bucket (Binding "BUCKET"): Armazenamento de arquivos e imagens de produtos/categorias.</li>
               </ul>
             </div>
+
           </div>
         </div>
       </div>

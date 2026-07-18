@@ -1,6 +1,21 @@
 import tailwindcss from '@tailwindcss/vite'
 
 export default defineNuxtConfig({
+  app: {
+    head: {
+      title: 'Rosas Presentes | Floricultura e Cestas de Presentes',
+      meta: [
+        { charset: 'utf-8' },
+        { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+        { name: 'description', content: 'Encontre os melhores buquês de rosas, cestas de café da manhã e presentes especiais. Entregamos amor e carinho em forma de flores.' }
+      ],
+      link: [
+        { rel: 'icon', type: 'image/png', href: '/favicon.png' },
+        { rel: 'shortcut icon', href: '/favicon.ico' }
+      ]
+    }
+  },
+
   modules: ['@pinia/nuxt'],
 
   css: ['~/assets/styles/main.css'],

@@ -5,6 +5,10 @@ import { useCartStore } from '~/stores/cartStore'
 const router = useRouter()
 const cartStore = useCartStore()
 
+useHead({
+  title: 'Finalizar Pedido | Rosas Presentes'
+})
+
 // State
 const customerName = ref('')
 const customerPhone = ref('')

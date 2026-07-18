@@ -22,10 +22,9 @@ const mapsLink =
     <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-10 relative z-10">
       <!-- Column 1: Store & Contact -->
       <div class="flex-1 space-y-5">
-        <div class="flex items-center space-x-2">
-          <span class="text-2xl font-bold tracking-tight text-white drop-shadow-sm"
-            >🌹 Rosas Presentes</span
-          >
+        <div class="flex items-center space-x-2.5">
+          <img src="/favicon.png" alt="Rosas Presentes Logo" class="h-8 w-8 rounded-lg object-cover shadow-sm border border-white/10" />
+          <span class="text-2xl font-bold tracking-tight text-white drop-shadow-sm">Rosas Presentes</span>
         </div>
         <p class="text-sm text-neutral-300/90 leading-relaxed">
           Especializada em floricultura, cestas de café da manhã, buquês e presentes especiais para
