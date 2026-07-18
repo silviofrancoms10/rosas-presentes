@@ -70,7 +70,10 @@ export default defineEventHandler(async (event) => {
       const protocol = headers['x-forwarded-proto'] || 'http'
       const redirectUrl = `${protocol}://${host}/checkout?success=true&order_id=${orderId}`
 
-      // 3. Monta o payload para a API de links da InfinitePay
+      // 3. Define multiplicador de desconto (PIX tem 5% de desconto)
+      const discountMultiplier = paymentMethod === 'pix' ? 0.95 : 1.0
+
+      // 4. Monta o payload para a API de links da InfinitePay
       const infinitePayPayload = {
         handle: 'silvio-augusto-46j',
         redirect_url: redirectUrl,
@@ -78,12 +81,13 @@ export default defineEventHandler(async (event) => {
         amount: Math.round(Number(totalPrice) * 100), // Preço total em centavos
         items: items.map((item: any) => ({
           title: item.product.name,
-          price: Math.round(Number(item.product.price) * 100), // Item em centavos
+          description: item.product.name, // Campo obrigatório
+          price: Math.round(Number(item.product.price) * discountMultiplier * 100), // Preço unitário ajustado com desconto em centavos
           quantity: Number(item.quantity)
         }))
       }
 
-      // 4. Efetua a requisição para a InfinitePay
+      // 5. Efetua a requisição para a InfinitePay
       let paymentUrl = ''
       try {
         const response = await $fetch<{ url: string }>('https://api.checkout.infinitepay.io/links', {
@@ -99,14 +103,15 @@ export default defineEventHandler(async (event) => {
           throw new Error('Nenhuma URL de checkout foi retornada pela API da InfinitePay.')
         }
       } catch (apiErr: any) {
-        console.error('Erro ao chamar API da InfinitePay:', apiErr)
+        console.error('Erro detalhado ao chamar API da InfinitePay:', apiErr.data || apiErr)
+        const errorDetails = apiErr.data ? JSON.stringify(apiErr.data) : (apiErr.message || apiErr)
         throw createError({
           statusCode: 502,
-          statusMessage: `Erro ao gerar link de pagamento na InfinitePay: ${apiErr.message || apiErr.data?.statusMessage || apiErr}`
+          statusMessage: `Erro ao gerar link de pagamento na InfinitePay: ${errorDetails}`
         })
       }
 
-      // 5. Prepara inserção no Banco de Dados
+      // 6. Prepara inserção no Banco de Dados
       const statements = []
 
       // Insere pedido
@@ -140,7 +145,7 @@ export default defineEventHandler(async (event) => {
           orderId,
           item.product.id,
           item.product.name,
-          Number(item.product.price),
+          Number(item.product.price) * discountMultiplier, // Salva o preço efetivo pago no banco
           Number(item.quantity)
         )
         statements.push(insertItemStmt)
