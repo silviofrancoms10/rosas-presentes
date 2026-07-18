@@ -51,9 +51,10 @@ const mapsLink =
                 />
               </svg>
             </div>
-            <span class="font-semibold text-white group-hover:text-white transition-colors"
-              >(67) 99947-6896</span
-            >
+            <span class="font-semibold text-white group-hover:text-white transition-colors">
+              (67) 98117-8782
+              <!-- (67) 99947-6896 -->
+            </span>
           </a>
 
           <!-- Address Link -->
@@ -87,8 +88,10 @@ const mapsLink =
               </svg>
             </div>
             <span class="leading-relaxed">
+              Rua Quinze de Novembro, 973 - Centro, Campo Grande-MS
+              <!--
               Rua Benito Melchíades de Oliveira, 227 - Nasser / Coophasul, Campo Grande - MS,
-              79117-320
+              79117-320 -->
             </span>
           </a>
         </div>

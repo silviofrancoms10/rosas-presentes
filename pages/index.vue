@@ -69,7 +69,6 @@ watch(
 const { data: apiCategories } = await useFetch<any[]>('/api/categories')
 const categories = ref<any[]>(apiCategories.value || [])
 
-
 // Navigation / Methods
 function nextSlide() {
   if (featuredProducts.value.length === 0) return
@@ -106,10 +105,6 @@ function selectCategory(categoryId: string) {
   router.push({ path: '/', query: { category: categoryId } })
 }
 
-
-
-
-
 const carouselTouchStartX = ref(0)
 const carouselTouchEndX = ref(0)
 
@@ -145,7 +140,6 @@ function handleCarouselSwipeGesture() {
     resetCarouselTimer()
   }
 }
-
 
 function openProductDetail(product: Product) {
   selectedProduct.value = product
@@ -313,7 +307,11 @@ onUnmounted(() => {
             v-for="cat in categories"
             :key="cat.id"
             class="relative rounded-2xl overflow-hidden w-[130px] shrink-0 h-20 md:flex-1 md:w-auto md:h-24 cursor-pointer select-none transition-all duration-300 ease-in-out border-2 shadow-sm"
-            :class="selectedCategory === cat.id ? 'border-burgundy scale-105 shadow-md -translate-y-0.5' : 'border-transparent opacity-85 hover:opacity-100 hover:scale-[1.02]'"
+            :class="
+              selectedCategory === cat.id
+                ? 'border-burgundy scale-105 shadow-md -translate-y-0.5'
+                : 'border-transparent opacity-85 hover:opacity-100 hover:scale-[1.02]'
+            "
             @click="selectCategory(cat.id)"
           >
             <!-- Background Image -->
@@ -341,7 +339,13 @@ onUnmounted(() => {
       <section class="space-y-4">
         <div class="flex justify-between items-center">
           <h3 class="text-lg font-bold text-burgundy tracking-tight">
-            {{ categories.find((c) => c.id === selectedCategory)?.name.split(' ').slice(1).join(' ') }}
+            {{
+              categories
+                .find((c) => c.id === selectedCategory)
+                ?.name.split(' ')
+                .slice(1)
+                .join(' ')
+            }}
           </h3>
           <span class="text-xs text-burgundy/60 font-medium">
             {{ filteredProducts.length }} itens encontrados
@@ -367,12 +371,16 @@ onUnmounted(() => {
           >
             Anterior
           </button>
-          
+
           <button
             v-for="page in totalPages"
             :key="page"
             class="w-9 h-9 rounded-xl border text-xs font-bold transition-all cursor-pointer"
-            :class="currentPage === page ? 'bg-burgundy text-white border-burgundy shadow-md' : 'border-burgundy/10 text-burgundy hover:bg-neutral-100'"
+            :class="
+              currentPage === page
+                ? 'bg-burgundy text-white border-burgundy shadow-md'
+                : 'border-burgundy/10 text-burgundy hover:bg-neutral-100'
+            "
             @click="changePage(page)"
           >
             {{ page }}
@@ -408,7 +416,7 @@ onUnmounted(() => {
 
     <!-- Floating WhatsApp button (desktop) -->
     <a
-      href="https://wa.me/5567999476896?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!"
+      href="https://wa.me/5567981178782?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!"
       target="_blank"
       class="hidden md:flex fixed bottom-6 right-6 bg-[#25d366] text-white p-4 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-300 z-40 items-center justify-center"
       title="Fale conosco no WhatsApp"
