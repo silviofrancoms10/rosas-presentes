@@ -1,10 +1,10 @@
 <script setup lang="ts">
-// Number requested: (67) 99947-6896 -> 5567999476896
-const whatsappNumber = '5567999476896'
+// Number requested: (67) 98117-8782 -> 5567981178782
+const whatsappNumber = '5567981178782'
 const whatsappLink = `https://wa.me/${whatsappNumber}?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!`
-const phoneLink = 'tel:+5567999476896'
+const phoneLink = 'tel:+5567981178782'
 const mapsLink =
-  'https://www.google.com/maps/search/?api=1&query=Rua+Benito+Melch%C3%ADades+de+Oliveira,+227+-+Nasser,+Campo+Grande+-+MS,+79117-320'
+  'https://www.google.com/maps/search/?api=1&query=Rua+Quinze+de+Novembro,+973+-+Centro,+Campo+Grande+-+MS'
 </script>
 
 <template>
@@ -53,7 +53,6 @@ const mapsLink =
             </div>
             <span class="font-semibold text-white group-hover:text-white transition-colors">
               (67) 98117-8782
-              <!-- (67) 99947-6896 -->
             </span>
           </a>
 
@@ -89,9 +88,6 @@ const mapsLink =
             </div>
             <span class="leading-relaxed">
               Rua Quinze de Novembro, 973 - Centro, Campo Grande-MS
-              <!--
-              Rua Benito Melchíades de Oliveira, 227 - Nasser / Coophasul, Campo Grande - MS,
-              79117-320 -->
             </span>
           </a>
         </div>

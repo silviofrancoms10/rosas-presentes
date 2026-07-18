@@ -106,7 +106,7 @@ function handleCartClick() {
 
     <!-- 4. Contato -->
     <a
-      href="https://wa.me/5567999476896?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!"
+      href="https://wa.me/5567981178782?text=Olá,%20gostaria%20de%20tirar%20uma%20dúvida%20sobre%20as%20flores%20e%20cestas!"
       target="_blank"
       class="mobile-nav-item"
     >
